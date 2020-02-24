@@ -1,0 +1,28 @@
+{
+  "name": "assembly-script-template",
+  "version": "1.0.0",
+  "description": "template for writing contract code",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "asbuild:untouched": "asc contract/index.ts -b build/untouched.wasm -t build/untouched.wat --validate --sourceMap --debug",
+    "asbuild:optimized": "asc contract/index.ts -b build/optimized.wasm -t build/optimized.wat --validate --sourceMap --optimize",
+    "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TrustedDataFramework/assembly-script-template.git"
+  },
+  "author": "Salpadding",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/TrustedDataFramework/assembly-script-template/issues"
+  },
+  "homepage": "https://github.com/TrustedDataFramework/assembly-script-template#readme",
+  "devDependencies": {
+    "assemblyscript": "^0.9.2"
+  },
+  "dependencies": {
+    "@assemblyscript/loader": "^0.9.2"
+  }
+}
