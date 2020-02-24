@@ -10,7 +10,7 @@ let counter: Counter;
 // which will be called at most once when contract deployed
 export function init(): void{
     counter = new Counter();
-    log("contract deployed successfully")
+    log("contract deployed successfully by index.ts")
 }
 
 export function invoke(): void{
