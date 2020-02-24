@@ -81,4 +81,14 @@ export function testJSON():void {
         arr,
         7
     ) == 0.02, '20');
+
+    json = '{"key":"value"}';
+    JSONBuilder.setJSON(0, json);
+    json = JSONBuilder.build();
+    json = JSONReader.getJSONByIndex(json, 0);
+    assert(JSONReader.getStringByKey(json, 'key') == 'value');
+
+    JSONBuilder.setF64(0, 0.5);
+    json = JSONBuilder.build();
+    assert(JSONReader.getF64ByIndex(json, 0) == 0.5);
 }

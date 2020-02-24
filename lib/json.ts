@@ -94,7 +94,7 @@ declare function _json_reader_get_f64_by_key(ptr: usize, ptr_len: usize, key_off
 
 // @ts-ignore
 @external("env", "_json_reader_get_json_by_index")
-declare function _json_array_get_json_by_index(ptr: usize, ptr_len: usize, idx: i32, json: usize): void;
+declare function _json_reader_get_json_by_index(ptr: usize, ptr_len: usize, idx: i32, json: usize): void;
 
 // @ts-ignore
 @external("env", "_json_reader_get_json_len_by_index")
@@ -183,7 +183,7 @@ export class JSONBuilder {
     }
 
     static setF64(idx: i32, value: f64): void {
-        _json_builder_set_f64(idx, changetype<usize>(value))
+        _json_builder_set_f64(idx, value)
     }
 
     static build(): string {
@@ -206,8 +206,10 @@ export class JSONReader {
 
     static getJSONByIndex(json: string, idx: i32): string {
         let buf_json: ArrayBuffer = String.UTF8.encode(json);
-        _json_reader_get_json_len_by_index(changetype<usize>(buf_json), buf_json.byteLength, idx);
-        return String.UTF8.decode(buf_json);
+        const len = _json_reader_get_json_len_by_index(changetype<usize>(buf_json), buf_json.byteLength, idx);
+        const ptr = new ArrayBuffer(len);
+        _json_reader_get_json_by_index(changetype<usize>(buf_json), buf_json.byteLength, idx, changetype<usize>(ptr));
+        return String.UTF8.decode(ptr);
     }
 
     static getStringByKey(json: string, name: string): string {
@@ -215,7 +217,7 @@ export class JSONReader {
         let buf_name: ArrayBuffer = String.UTF8.encode(name);
         let len = _json_reader_get_str_len(changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_name), buf_name.byteLength);
         const ptr = new ArrayBuffer(len);
-        _json_reader_get_str(changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_name), buf_name.byteLength, changetype<usize>(ptr))
+        _json_reader_get_str(changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_name), buf_name.byteLength, changetype<usize>(ptr));
         return String.UTF8.decode(ptr);
     }
 
