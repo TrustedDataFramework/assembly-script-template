@@ -38,7 +38,7 @@ export function testJSON():void {
 
     JSONBuilder.putBool("abc", true);
     json = JSONBuilder.build();
-    assert(JSONReader.getBoolByKey(json, 'abc'), '6')
+    assert(JSONReader.getBoolByKey(json, 'abc'), '6');
 
     JSONBuilder.putF64("abc", f64.MAX_SAFE_INTEGER);
     json = JSONBuilder.build();

@@ -1,6 +1,6 @@
-const fs = require('fs')
-const conf = require('./config.json')
-const axios = require('axios')
+const fs = require('fs');
+const conf = require('./config.json');
+const axios = require('axios');
 
 const transaction = {
     version: conf.version,
@@ -11,12 +11,12 @@ const transaction = {
     createdAt: Math.floor(Date.now() / 1000),
     nonce: conf.nonce,
     gasPrice: conf.gasPrice
-}
+};
 
-transaction.payload = fs.readFileSync(conf.binary).toString('hex')
+transaction.payload = fs.readFileSync(conf.binary).toString('hex');
 
 axios
-    .post(conf.entrypoint, transaction)
+    .post(conf.endpoint, transaction)
     .then(console.log)
     .catch(console.error)
 
