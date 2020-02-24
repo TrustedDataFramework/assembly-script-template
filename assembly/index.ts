@@ -1,4 +1,4 @@
-import {Context, Hex, JSONBuilder, Decimal, log, Result, JSONReader} from "../lib/index.ts";
+import {Context, Hex, JSONBuilder, Decimal, log, Result, JSONReader} from "../lib";
 
 class Counter{
     count: i32

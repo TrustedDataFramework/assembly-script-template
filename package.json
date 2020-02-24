@@ -20,7 +20,8 @@
   },
   "homepage": "https://github.com/TrustedDataFramework/assembly-script-template#readme",
   "devDependencies": {
-    "assemblyscript": "^0.9.2"
+    "assemblyscript": "^0.9.2",
+    "axios": "^0.19.2"
   },
   "dependencies": {
     "@assemblyscript/loader": "^0.9.2"
