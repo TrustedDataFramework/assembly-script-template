@@ -18,4 +18,5 @@ transaction.payload = fs.readFileSync(conf.binary).toString('hex')
 axios
     .post(conf.entrypoint, transaction)
     .then(console.log)
+    .catch(console.error)
 
