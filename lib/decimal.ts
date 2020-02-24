@@ -81,7 +81,6 @@ export class Decimal{
     static compare(x: string, y: string): i32{
         const str_x = String.UTF8.encode(x);
         const str_y = String.UTF8.encode(y);
-        const result: usize = _decimal_compare_to(changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength);
-        return result;
+        return _decimal_compare_to(changetype<usize>(str_x), str_x.byteLength, changetype<usize>(str_y), str_y.byteLength);
     }
 }
