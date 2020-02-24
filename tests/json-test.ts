@@ -10,7 +10,6 @@ export function init(): void{
 
 export function invoke(): void{
     log("hello world");
-
 }
 
 
@@ -18,36 +17,36 @@ export function testJSON():void {
     JSONBuilder.putJSON("key","{\"name\":\"kitty\"}");
     let json = JSONBuilder.build();
     json = JSONReader.getJSONByKey(json, "key");
-    json = JSONReader.getJSONByKey(json, "name");
-    assert(json === 'kitty');
+    json = JSONReader.getStringByKey(json, "name");
+    assert(json == 'kitty', '1');
 
     JSONBuilder.putString("key","value");
     json = JSONBuilder.build();
-    assert('value' === JSONReader.getStringByKey(json, 'key'));
+    assert('value' == JSONReader.getStringByKey(json, 'key'), '2');
 
     JSONBuilder.putU64("abc", u64.MAX_VALUE);
     json = JSONBuilder.build();
-    assert(u64.MAX_VALUE === JSONReader.getU64ByKey('abc', json));
+    assert(u64.MAX_VALUE == JSONReader.getU64ByKey(json, 'abc'), '3');
 
     JSONBuilder.putI64("abc", i64.MAX_VALUE);
     json = JSONBuilder.build();
-    assert(i64.MAX_VALUE === JSONReader.getI64ByKey(json, 'abc'));
+    assert(i64.MAX_VALUE == JSONReader.getI64ByKey(json, 'abc'), '4');
 
     JSONBuilder.putI64("abc", i64.MIN_VALUE);
     json = JSONBuilder.build();
-    assert(i64.MIN_VALUE === JSONReader.getI64ByKey(json, 'abc'));
+    assert(i64.MIN_VALUE == JSONReader.getI64ByKey(json, 'abc'), '5');
 
     JSONBuilder.putBool("abc", true);
     json = JSONBuilder.build();
-    assert(JSONReader.getBoolByKey(json, 'abc'))
+    assert(JSONReader.getBoolByKey(json, 'abc'), '6')
 
     JSONBuilder.putF64("abc", f64.MAX_SAFE_INTEGER);
     json = JSONBuilder.build();
-    assert(f64.MAX_SAFE_INTEGER === JSONReader.getF64ByKey(json, 'abc'));
+    assert(f64.MAX_SAFE_INTEGER == JSONReader.getF64ByKey(json, 'abc'), '7');
 
     JSONBuilder.putF64("abc", 0.3);
     json = JSONBuilder.build();
-    assert(0.3 === JSONReader.getF64ByKey(json, 'abc'));
+    assert(0.3 == JSONReader.getF64ByKey(json, 'abc'), '8');
 
 
     JSONBuilder.setBool(0, true);
@@ -60,26 +59,26 @@ export function testJSON():void {
 
     json = JSONBuilder.build();
     let arr = JSONReader.getJSONByKey(json, 'key--ddd');
-    assert(JSONReader.getBoolByIndex(arr, 0));
-    assert(JSONReader.getStringByIndex(arr, 1) === 'abc');
-    assert(JSONReader.getI64ByIndex(arr, 2) === i64.MAX_VALUE);
-    assert(JSONReader.getI64ByIndex(arr, 3) === i64.MIN_VALUE);
-    assert(JSONReader.getU64ByIndex(arr, 4) === 0);
-    assert(JSONReader.getU64ByIndex(arr, 5) === u64.MAX_VALUE);
+    assert(JSONReader.getBoolByIndex(arr, 0), '9');
+    assert(JSONReader.getStringByIndex(arr, 1) == 'abc', '10');
+    assert(JSONReader.getI64ByIndex(arr, 2) == i64.MAX_VALUE, '11');
+    assert(JSONReader.getI64ByIndex(arr, 3) == i64.MIN_VALUE, '12');
+    assert(JSONReader.getU64ByIndex(arr, 4) == 0, '13');
+    assert(JSONReader.getU64ByIndex(arr, 5) == u64.MAX_VALUE, '14');
 
     json = `{"key--ddd":[true,"abc",9223372036854775807,-9223372036854775808,18446744073709551615,0,-1, 0.02]}`;
     arr = JSONReader.getJSONByKey(json, "key--ddd");
     assert(JSONReader.getBoolByIndex(
         arr,
         0
-    ));
+    ), '15');
 
-    assert(JSONReader.getStringByIndex(arr, 1) === 'abc');
-    assert(JSONReader.getI64ByIndex(arr, 2).toString() === '9223372036854775807');
-    assert(JSONReader.getI64ByIndex(arr, 3).toString() === '-9223372036854775808');
-    assert(JSONReader.getU64ByIndex(arr, 4).toString() === '18446744073709551615');
+    assert(JSONReader.getStringByIndex(arr, 1) == 'abc', '16');
+    assert(JSONReader.getI64ByIndex(arr, 2).toString() == '9223372036854775807', '17');
+    assert(JSONReader.getI64ByIndex(arr, 3).toString() == '-9223372036854775808', '18');
+    assert(JSONReader.getU64ByIndex(arr, 4).toString() == '18446744073709551615', '19');
     assert (JSONReader.getF64ByIndex(
         arr,
         7
-    ) === 0.02);
+    ) == 0.02, '20');
 }
