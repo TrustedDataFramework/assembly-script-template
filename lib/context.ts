@@ -39,10 +39,6 @@ declare function _context_amount(): usize;
 declare function _context_gas_price(): usize;
 
 // @ts-ignore
-@external("env", "_context_gas_limit")
-declare function _context_gas_limit(): usize;
-
-// @ts-ignore
 @external("env", "_context_block_timestamp")
 declare function _context_block_timestamp(): usize;
 
@@ -62,8 +58,21 @@ declare function _context_parent_block_hash(offset: usize): void;
 @external("env", "_context_parent_block_hash_len")
 declare function _context_parent_block_hash_len(): usize;
 
+// @ts-ignore
+@external("env", "_context_nonce")
+declare function _context_nonce(): u64;
 
+// @ts-ignore
+@external("env", "_context_signature_len")
+declare function _context_signature_len(): usize;
 
+// @ts-ignore
+@external("env", "_context_signature")
+declare function _context_signature(offset: usize): void;
+
+/**
+ * context is
+ */
 export class Context{
     static load(): Context{
         const transactionHash_len: usize = _context_transaction_hash_len();
@@ -90,41 +99,48 @@ export class Context{
         const parentBlockHash_len: usize = _context_parent_block_hash_len();
         const parentBlockHash_buf: ArrayBuffer = new ArrayBuffer(parentBlockHash_len);
         _context_parent_block_hash(changetype<usize>(parentBlockHash_buf));
-        const parentBlockHash: Uint8Array =  Uint8Array.wrap(parentBlockHash_buf);
+
+        const signature_len: usize = _context_signature_len();
+        const signature_buf: ArrayBuffer = new ArrayBuffer(signature_len);
+        _context_signature(changetype<usize>(signature_buf));
         return new Context(
             transactionHash,
             method,
+            _context_nonce(),
             sender,
             recipient,
             _context_amount(),
             _context_gas_price(),
-            _context_gas_limit(),
             _context_block_timestamp(),
             _context_transaction_timestamp(),
             _context_block_height(),
-            parentBlockHash
+            Uint8Array.wrap(parentBlockHash_buf),
+            Uint8Array.wrap(signature_buf)
         );
     }
+
     // TODO: parse block chain context
     // 1. transaction_hash
-    // 2. sender
-    // 3. recipient
-    // 4. amount, in contract call transaction, amount will seem as bonus to contract address
-    // 5. gas price, if gas * gas_price > sender's account balance, program will aborted
-    // 6. gas limit, if gas > gas limit, program will aborted too
-    // 7. block timestamp
-    // 8. transaction timestamp
+    // 2. from
+    // 3. to
+    // 4. amount, in contract call transaction, amount will be transfer to contract creator
+    // 5. gas price
+    // 6. block timestamp
+    // 7. transaction timestamp
+    // 8. block height
     // 9. parent block hash
     constructor(readonly transactionHash: Uint8Array,
                 readonly method: string,
-                readonly sender: Uint8Array,
-                readonly recipient: Uint8Array,
+                readonly nonce: u64,
+                readonly from: Uint8Array,
+                readonly to: Uint8Array,
                 readonly amount: u64,
                 readonly gasPrice: u64,
-                readonly gasLimit: u64,
                 readonly blockTimestamp: u64,
                 readonly transactionTimestamp: u64,
                 readonly blockHeight: u64,
-                readonly parentBlockHash: Uint8Array) {
+                readonly parentBlockHash: Uint8Array,
+                readonly signature: Uint8Array
+    ) {
     }
 }

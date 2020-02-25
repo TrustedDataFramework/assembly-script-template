@@ -7,7 +7,7 @@ let balances: Map<Uint8Array, u64>;
 export function init(): void {
     balances = new Map<Uint8Array, u64>();
     let c = Context.load();
-    sender = c.sender;
+    sender = c.from;
     balances.set(sender, 100_0000);
     log("contract deployed successfully");
 }

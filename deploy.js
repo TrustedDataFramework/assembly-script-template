@@ -1,6 +1,13 @@
 const fs = require('fs');
-const conf = require('./config.json');
 const axios = require('axios');
+const program = require('commander');
+
+program
+    .option("--config -c <string>", "configuration file");
+
+program.parse(process.argv);
+
+const conf = require(program.config ? program.config : './config.json');
 
 const transaction = {
     version: conf.version,
@@ -17,6 +24,6 @@ transaction.payload = fs.readFileSync(conf.binary).toString('hex');
 
 axios
     .post(conf.endpoint, transaction)
-    .then(console.log)
-    .catch(console.error)
+    .then(()=>{})
+    .catch(() => console.error('err'))
 
