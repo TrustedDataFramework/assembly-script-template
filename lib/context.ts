@@ -70,11 +70,17 @@ declare function _context_signature_len(): usize;
 @external("env", "_context_signature")
 declare function _context_signature(offset: usize): void;
 
+// @ts-ignore
+@external("env", "_context_available")
+declare function _context_available(): u64;
+
+
 /**
- * context is
+ * context.load() is only available when deploy/call contract
  */
 export class Context{
     static load(): Context{
+        assert(_context_available() > 0, 'Context.load() is not available');
         const transactionHash_len: usize = _context_transaction_hash_len();
         const transactionHash_buf: ArrayBuffer = new ArrayBuffer(transactionHash_len);
         _context_transaction_hash(changetype<usize>(transactionHash_buf));

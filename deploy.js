@@ -7,7 +7,7 @@ program
 
 program.parse(process.argv);
 
-const conf = require(program.config ? program.config : './config.json');
+const conf = require(program.config ? program.config : './deploy-config.json');
 
 const transaction = {
     version: conf.version,
