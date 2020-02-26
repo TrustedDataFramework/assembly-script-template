@@ -7,7 +7,7 @@ export function init(): void {
     balances = new Map<string, u64>();
     let contract = Contract.load();
     balances.set(Hex.encode(contract.createdBy), 100_0000);
-    log("contract deployed successfully");
+    log("contract deployed successfully address = " + Hex.encode(Contract.load().address));
 }
 
 /**
@@ -17,7 +17,11 @@ export function charge(): void{
     const c = Context.load();
     const p = Parameters.load();
     assert(p.readAll().byteLength == 0, 'parameters are not allowed in charge');
+    if(!balances.has(Hex.encode(c.from))){
+        balances.set(Hex.encode(c.from), 0);
+    }
     balances.set(Hex.encode(c.from), balances.get(Hex.encode(c.from)) + c.amount);
+    log('charge to address ' + Hex.encode(c.from) + " success, balance = " + balances.get(Hex.encode(c.from)).toString() + " after charge");
 }
 
 /**
@@ -26,6 +30,14 @@ export function charge(): void{
 export function transfer(): void {
     const c = Context.load();
     const p = Parameters.load();
+
+    if(!balances.has(Hex.encode(c.from))){
+        balances.set(Hex.encode(c.from), 0);
+    }
+
+    if(!balances.has(Hex.encode(c.to))){
+        balances.set(Hex.encode(c.to), 0);
+    }
 
     let balance = balances.get(Hex.encode(c.from));
     let json = String.UTF8.decode(p.readAll().buffer);
@@ -51,6 +63,10 @@ export function getBalance(): void {
 
     let json = String.UTF8.decode(p.readAll().buffer);
     let address = JSONReader.getStringByKey(json, 'address');
+
+    if(!balances.has(address)){
+        balances.set(address, 0);
+    }
     let balance = balances.get(address);
     log("getBalance succeed, balance is " + balance.toString());
 

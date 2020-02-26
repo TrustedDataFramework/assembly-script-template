@@ -38,8 +38,8 @@ export class Parameters {
         return String.UTF8.decode(arr.buffer);
     }
 
-    bytes(len: i32 = 0): Uint8Array {
-        const buf = new Uint8Array(len > 0 ? len : this.u32());
+    bytes(len: i32): Uint8Array {
+        const buf = new Uint8Array(len);
 
         for (let i = 0; i < buf.byteLength; i++) {
             buf[i] = this.u8();

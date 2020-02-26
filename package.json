@@ -8,8 +8,8 @@
     "asbuild:untouched": "asc assembly/index.ts -b build/untouched.wasm -t build/untouched.wat --validate --sourceMap --debug",
     "asbuild:optimized": "asc assembly/index.ts -b build/optimized.wasm -t build/optimized.wat --validate --sourceMap --optimize",
     "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized",
-    "asbuild:json-test": "asc tests/json-test.ts -b build/optimized.wasm -t build/optimized.wat --validate --sourceMap --optimize",
-    "asbuild:coin": "asc tests/coin.ts -b build/optimized.wasm -t build/optimized.wat --validate --sourceMap --optimize",
+    "asbuild:json-test": "asc tests/json-test.ts -b build/optimized.wasm -t build/optimized.wat --validate --sourceMap --debug",
+    "asbuild:coin": "asc tests/coin.ts -b build/coin.wasm -t build/coin.wat --validate --sourceMap --debug",
     "asbuild:context-test": "asc tests/context-test.ts -b build/context-test.wasm -t build/context-test.wat --validate --sourceMap --optimize",
     "deploy": "node ./deploy.js"
   },

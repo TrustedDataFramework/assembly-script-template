@@ -6,13 +6,17 @@ const transaction = {
     from: 'e54090596bcdfe5441e1e3d838cdbf5a8eed6b1fd71d105cc4f59646faadb6da',
     signature: 'ff',
     createdAt: Math.floor(Date.now() / 1000),
-    nonce: 2,
+    nonce: 1,
     gasPrice: 100,
-    to: 'dee94526fee50cc54393ab57d8c924040ecfafdf'
+    amount: 10000,
+    to: 'dbaa9b3b7a874c3d9593bc03eda88ad7f537309c'
 };
 
 transaction.payload = Buffer.concat(
-    [Buffer.from(['invoke'.length]), Buffer.from('invoke', 'ascii')]
+    [
+        Buffer.from(['charge'.length]),
+        Buffer.from('charge', 'ascii')
+    ]
 );
 
 transaction.payload = transaction.payload.toString('hex');
