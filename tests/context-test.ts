@@ -1,14 +1,17 @@
-import {Context, Hex, JSONBuilder, Decimal, log, Result, JSONReader, Contract} from "../lib";
+import {Context, Hex, JSONBuilder, Decimal, log, Result, JSONReader, Contract, Parameters} from "../lib";
 
 
 // every contract should had a function named by init
 // which will be called at most once when contract deployed
 export function init(): void{
     testContext();
+    log('contract address = ' + Hex.encode(Contract.load().address));
 }
 
 export function invoke(): void{
-    log("hello world");
+    const p = Parameters.load();
+    assert(p.method == 'invoke');
+    log('invoked');
 }
 
 
@@ -16,7 +19,7 @@ export function invoke(): void{
 export function testContext(): void{
     let ctx: Context = Context.load();
     assert(ctx.method == 'init');
-    assert(Hex.encode(ctx.from) == 'e54090596bcdfe5441e1e3d838cdbf5a8eed6b1fd71d105cc4f59646faadb6da');
+    assert(Hex.encode(ctx.from) == '87b8f0b097b48b282a5c661babc8096e141bd9fb');
     assert(Hex.encode(ctx.to) == '');
     assert(Hex.encode(ctx.transactionHash) != '');
     assert(ctx.gasPrice == 100);

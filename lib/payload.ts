@@ -1,43 +1,41 @@
 // @ts-ignore
-@external("env", "_payload")
-declare function _payload(ptr: usize): void;
+@external("env", "_parameters")
+declare function _parameters(ptr: usize): void;
 
 // @ts-ignore
-@external("env", "_payload_len")
-declare function _payload_len(): usize;
+@external("env", "_parameters_len")
+declare function _parameters_len(): usize;
+
+// @ts-ignore
+@external("env", "_parameters_available")
+declare function _parameters_available(): u64;
 
 export class Parameters {
 
     view: DataView;
     offset: u32;
+    method: string;
 
     static load(): Parameters {
-        const payload_len = _payload_len();
+        assert(_parameters_available() != 0, 'contract deploy contains none parameters');
+        const payload_len = _parameters_len();
         const payload = new ArrayBuffer(payload_len);
-        _payload(changetype<usize>(payload));
+        _parameters(changetype<usize>(payload));
         const view = new DataView(payload, 0, payload_len);
         let params = new Parameters();
         params.view = view;
         params.offset = 0;
+        params.method = params.string();
         return params;
     }
 
     string(): string {
-        let buf: u8[] = [];
-        while (true) {
-            const v = this.u8();
-            if (v === <u8>0) break;
-            buf.push(v);
+        const len = this.u8();
+        const arr = new Uint8Array(len);
+        for(let i:u8 = 0; i < len; i++){
+           arr[i] = this.u8();
         }
-
-        let v = new Uint8Array(buf.length);
-        for (let i = 0; i < buf.length; i++) {
-            v[i] = buf[i];
-        }
-
-        this.offset += buf.length + 1;
-
-        return String.UTF8.decode(v.buffer);
+        return String.UTF8.decode(arr.buffer);
     }
 
     bytes(len: i32 = 0): Uint8Array {
@@ -107,4 +105,7 @@ export class Parameters {
         return this.view.buffer.byteLength - this.offset
     }
 
+    readAll(): Uint8Array{
+        return this.bytes(this.remain());
+    }
 }
