@@ -15,6 +15,9 @@ node ./deploy.js
 ## 代币合约
 
 ```shell script
+# 编译
+npx run asbuild:coin
+
 # 部署合约 
 node tests/deploy-coin.js
 
