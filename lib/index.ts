@@ -36,4 +36,4 @@ export * from './json';
 export * from './payload';
 export * from './result';
 export * from './contract'
-
+export * from './event'

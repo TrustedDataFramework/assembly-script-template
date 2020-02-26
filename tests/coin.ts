@@ -1,5 +1,7 @@
-import {Context, log, Parameters, Result, JSONBuilder, Hex, JSONReader, Contract} from "../lib";
-
+/*
+代币合约样例, 本案例通过 json 传参，生产环境应尽量使用二进制格式传参
+ */
+import {Context, log, Parameters, Result, JSONBuilder, Hex, JSONReader, Contract, Event} from "../lib";
 
 let balances: Map<string, u64>;
 
@@ -64,13 +66,33 @@ export function getBalance(): void {
     let json = String.UTF8.decode(p.readAll().buffer);
     let address = JSONReader.getStringByKey(json, 'address');
 
-    if(!balances.has(address)){
-        balances.set(address, 0);
-    }
-    let balance = balances.get(address);
+    let balance = balances.has(address) ? balances.get(address) : 0;
     log("getBalance succeed, balance is " + balance.toString());
 
     JSONBuilder.putString('address', address);
     JSONBuilder.putU64("balance", balance);
     Result.write(Uint8Array.wrap(String.UTF8.encode(JSONBuilder.build())));
+}
+
+/**
+ * 提取，提取并不会主动调用转账，而是以事件的形式通知合约的部署者提取的金额数量，
+ * 部署者收到事件后确认事务已被打包，进行转账操作
+ */
+export function extract(): void{
+    const p = Parameters.load();
+    const c = Context.load();
+
+    let json = String.UTF8.decode(p.readAll().buffer);
+    let address = Hex.encode(c.from);
+
+    let amount = JSONReader.getU64ByKey(json, 'amount');
+    let balance = balances.has(address) ? balances.get(address) : 0;
+
+    assert(balance >= amount, 'balance is not enough');
+
+    balances.set(address, balance - amount);
+    JSONBuilder.putString('address', address);
+    JSONBuilder.putU64('amount', amount);
+    JSONBuilder.putString('tx', Hex.encode(c.transactionHash));
+    Event.emit('extract', Uint8Array.wrap(String.UTF8.encode(JSONBuilder.build())));
 }
