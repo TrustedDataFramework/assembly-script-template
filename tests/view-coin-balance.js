@@ -9,7 +9,7 @@ const parameters = Buffer.concat(
 );
 
 axios
-    .get('http://localhost:8080/contract/dbaa9b3b7a874c3d9593bc03eda88ad7f537309c?parameters=' + parameters.toString('hex'))
+    .get('http://localhost:8080/rpc/contract/dbaa9b3b7a874c3d9593bc03eda88ad7f537309c?parameters=' + parameters.toString('hex'))
     .then(resp => resp.data)
     .then(x => Buffer.from(x.data, 'hex'))
     .then(b => JSON.parse(b.toString('ascii')))

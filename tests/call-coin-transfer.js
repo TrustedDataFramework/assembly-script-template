@@ -22,6 +22,6 @@ transaction.payload = Buffer.concat(
 transaction.payload = transaction.payload.toString('hex');
 
 axios
-    .post('http://localhost:8080/transaction', transaction)
+    .post('http://localhost:8080/rpc/transaction', transaction)
     .then(()=>{})
     .catch(() => console.error('err'));

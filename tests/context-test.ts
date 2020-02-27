@@ -29,7 +29,7 @@ export function testContext(): void{
     assert(Hex.encode(ctx.parentBlockHash) != '');
     assert(ctx.amount == 0);
     assert(Hex.encode(ctx.signature) == 'ff');
-    assert(ctx.nonce == 1);
+    assert(ctx.nonce >= 1);
 
     const contract = Contract.load();
     assert(contract.address.byteLength == 20);
