@@ -135,7 +135,7 @@ export class Context{
     // 7. transaction timestamp
     // 8. block height
     // 9. parent block hash
-    constructor(readonly transactionHash: Uint8Array,
+    private constructor(readonly transactionHash: Uint8Array,
                 readonly method: string,
                 readonly nonce: u64,
                 readonly from: Uint8Array,
