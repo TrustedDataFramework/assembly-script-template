@@ -4,9 +4,82 @@ const OFFSET_LONG_ITEM: u8 = 0xb7;
 const OFFSET_SHORT_LIST:u8 = 0xc0;
 const OFFSET_LONG_LIST: u8 = 0xf7;
 
+export class RLP{
+    static isList(encoded: Uint8Array): bool{
+        return encoded[0] >= OFFSET_SHORT_LIST;
+    }
+    static encodeBytes(bytes: Uint8Array): Uint8Array{
+        return encodeBytes(bytes);
+    }
+    static encodeElements(elements: Array<Uint8Array>): Uint8Array{
+        return encodeElements(elements);
+    }
+}
+
+function byteArrayToInt(bytes: Uint8Array): u64{
+    let ret: u64 = 0;
+    for(let i = 0; i < bytes.length; i++){
+        const u: u8 = bytes[bytes.length - i - 1];
+        ret += (u << i)
+    }
+    return ret;
+}
+
+function copyOfRange(bytes: Uint8Array, from: u32, to: u32) : Uint8Array{
+    const ret: Uint8Array = new Uint8Array(to - from);
+    let j: u32 = 0;
+    for(let i = from; i < to; i++){
+        ret[j] = bytes[i];
+        j++;
+    }
+    return ret;
+}
+
+function estimateSize(encoded: Uint8Array): u32{
+    const prefix: u8 = encoded[0];
+    if (prefix < OFFSET_SHORT_ITEM) {
+        return 1;
+    }
+    if (prefix <= OFFSET_LONG_ITEM) {
+        return prefix - OFFSET_SHORT_ITEM + 1;
+    }
+    if (prefix < OFFSET_SHORT_LIST) {
+        return byteArrayToInt(
+            copyOfRange(encoded,  1,  1 + prefix - OFFSET_LONG_ITEM)
+        ) + 1 + prefix - OFFSET_LONG_ITEM;
+    }
+    if (prefix <= OFFSET_LONG_LIST) {
+        return prefix - OFFSET_SHORT_LIST + 1;
+    }
+    return byteArrayToInt(copyOfRange(encoded,  1,  1 + prefix - OFFSET_LONG_LIST)) + 1 + prefix - OFFSET_LONG_LIST;
+}
+
+function validateSize(encoded: Uint8Array): void{
+    assert(encoded.length == estimateSize(encoded), 'invalid rlp format');
+}
+
+
 export class RLPItem{
     static NULL: RLPItem = new RLPItem(new Uint8Array(0));
 
+    static fromEncoded(encoded: Uint8Array): RLPItem{
+        const prefix = encoded[0];
+        if (prefix < OFFSET_SHORT_ITEM) {
+            const data: Uint8Array = new Uint8Array(1);
+            data[0] = prefix;
+            return new RLPItem(data);
+        }
+        if (prefix <= OFFSET_LONG_ITEM) {
+            const length: u32 = prefix - OFFSET_SHORT_ITEM;
+            if (length == 0) return RLPItem.NULL;
+            RLPItem item = new RLPItem(new LazyByteArray(raw, offset, offset + length));
+            skip(length);
+            return item;
+        }
+        return RLPItem.NULL;
+    }
+
+    // before encoded data
     private readonly data: Uint8Array;
 
     private constructor(data: Uint8Array) {
@@ -55,15 +128,21 @@ export class RLPList{
     static EMPTY: RLPList = new RLPList([]);
     private readonly elements: Array<Uint8Array>;
 
+    static fromEncoded(encoded: Uint8Array): RLPList{
+        assert(RLP.isList(encoded), 'not a rlp list');
+        validateSize(encoded);
+        
+    }
+
     private constructor(elements: Array<Uint8Array>) {
         this.elements = elements;
     }
 
     getItem(index: u32): RLPItem{
-        return RLPItem.NULL;
+        return decodeItem(this.getRaw(index));
     }
     getList(index: u32): RLPList{
-        return RLPList.EMPTY;
+        return decodeList(this.getRaw(index))
     }
     length(): u32{
         return this.elements.length;
@@ -73,23 +152,10 @@ export class RLPList{
     }
 }
 
-export function isList(encoded: Uint8Array): boolean{
-    return encoded[0] >= OFFSET_SHORT_LIST
-}
 
 
-export function decodeList(encoded: Uint8Array): RLPList{
-    assert(isList(encoded), 'the encoded rlp is not array');
-    const prefix: u8 = encoded[0];
-    let elements: Array<Uint8Array> = new Array<Uint8Array>();
-    return RLPList.EMPTY;
-}
 
-export function decodeItem(encoded: Uint8Array): RLPItem{
-    return RLPItem.NULL;
-}
-
-export function encodeBytes(bytes: Uint8Array): Uint8Array{
+function encodeBytes(bytes: Uint8Array): Uint8Array{
     if(bytes.length == 0){
         const ret: Uint8Array = new Uint8Array(1);
         ret[0] = OFFSET_SHORT_ITEM;
@@ -131,7 +197,7 @@ export function encodeBytes(bytes: Uint8Array): Uint8Array{
 }
 
 
-export function encodeElements(elements: Array<Uint8Array>): Uint8Array{
+function encodeElements(elements: Array<Uint8Array>): Uint8Array{
     let totalLength: u32 = 0;
     for(let i = 0; i < elements.length; i++){
         totalLength += elements.length;
