@@ -1,37 +1,16 @@
+enum Type{
+    ADD, SUB,MUL, DIV,  COMPARE
+}
+
 // @ts-ignore
-@external("env", "_decimal_result")
+@external("env", "_decimal")
 //result z
-declare function _decimal_result(z_offset: usize): void;
-
-// @ts-ignore
-@external("env", "_decimal_add")
-// x + y = z
-declare function _decimal_add(x_offset: usize, x_len: usize, y_offset: usize, y_len: usize): usize;
-
-// @ts-ignore
-@external("env", "_decimal_sub")
-// x - y = z
-declare function _decimal_sub(x_offset: usize, x_len: usize, y_offset: usize, y_len: usize): usize;
-
-// @ts-ignore
-@external("env", "_decimal_mul")
-// x * y = z
-declare function _decimal_mul(x_offset: usize, x_len: usize, y_offset: usize, y_len: usize): usize;
-
-// @ts-ignore
-@external("env", "_decimal_strict_div")
-// x / y = z
-declare function _decimal_strict_div(x_offset: usize, x_len: usize, y_offset: usize, y_len: usize): usize;
-
-// @ts-ignore
-@external("env", "_decimal_div")
-// x / y = z
-declare function _decimal_div(x_offset: usize, x_len: usize, y_offset: usize, y_len: usize, precision: i32): usize;
-
-// @ts-ignore
-@external("env", "_decimal_compare_to")
-// x / y = z >1 =0 <-1
-declare function _decimal_compare_to(x_offset: usize, x_len: usize, y_offset: usize, y_len: usize): i32;
+declare function _decimal(type: u32,
+                          x_offset: usize, x_len: usize,
+                          y_offset: usize, y_len: usize,
+                          arg1: u64, arg2: u64,
+                          put: u64
+): i32;
 
 
 // decimal will not be stored in memory
@@ -41,46 +20,38 @@ export class Decimal{
     static add(x: string, y: string): string{
         const str_x = String.UTF8.encode(x);
         const str_y = String.UTF8.encode(y);
-        const result: usize = _decimal_add(changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength);
-        const result_buf = new ArrayBuffer(result);
-        _decimal_result(changetype<usize>(result_buf));
+        const len = _decimal(Type.ADD, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength, 0, 0, 0);
+        const result_buf = new ArrayBuffer(len);
+        _decimal(Type.ADD, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength, changetype<usize>(result_buf), 0,1);
         return String.UTF8.decode(result_buf);
     }
     static sub(x: string, y: string): string{
         const str_x = String.UTF8.encode(x);
         const str_y = String.UTF8.encode(y);
-        const result: usize = _decimal_sub(changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength);
+        const result = _decimal(Type.SUB, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength,0,0,0);
         const result_buf = new ArrayBuffer(result);
-        _decimal_result(changetype<usize>(result_buf));
+        _decimal(Type.SUB, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength,changetype<usize>(result_buf), 0, 1);
         return String.UTF8.decode(result_buf);
     }
     static mul(x: string, y: string): string{
         const str_x = String.UTF8.encode(x);
         const str_y = String.UTF8.encode(y);
-        const result: usize = _decimal_mul(changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength);
+        const result = _decimal(Type.MUL, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength, 0, 0, 0);
         const result_buf = new ArrayBuffer(result);
-        _decimal_result(changetype<usize>(result_buf));
-        return String.UTF8.decode(result_buf);
-    }
-    static strictDiv(x: string, y: string): string{
-        const str_x = String.UTF8.encode(x);
-        const str_y = String.UTF8.encode(y);
-        const result: usize = _decimal_strict_div(changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength);
-        const result_buf = new ArrayBuffer(result);
-        _decimal_result(changetype<usize>(result_buf));
+        _decimal(Type.MUL, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength, changetype<usize>(result_buf),0,1);
         return String.UTF8.decode(result_buf);
     }
     static div(x: string, y: string, precision: i32): string{
         const str_x = String.UTF8.encode(x);
         const str_y = String.UTF8.encode(y);
-        const result: usize = _decimal_div(changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength,precision);
+        const result: usize = _decimal(Type.DIV, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y), str_y.byteLength,0,precision, 0);
         const result_buf = new ArrayBuffer(result);
-        _decimal_result(changetype<usize>(result_buf));
+        _decimal(Type.DIV, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y), str_y.byteLength, changetype<usize>(result_buf), precision, 1);
         return String.UTF8.decode(result_buf);
     }
     static compare(x: string, y: string): i32{
         const str_x = String.UTF8.encode(x);
         const str_y = String.UTF8.encode(y);
-        return _decimal_compare_to(changetype<usize>(str_x), str_x.byteLength, changetype<usize>(str_y), str_y.byteLength);
+        return _decimal(Type.COMPARE, changetype<usize>(str_x), str_x.byteLength, changetype<usize>(str_y), str_y.byteLength, 0, 0, 0);
     }
 }

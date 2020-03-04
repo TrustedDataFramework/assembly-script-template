@@ -20,6 +20,7 @@ export function testJSON():void {
     json = JSONReader.getStringByKey(json, "name");
     assert(json == 'kitty', '1');
 
+
     JSONBuilder.putString("key","value");
     json = JSONBuilder.build();
     assert('value' == JSONReader.getStringByKey(json, 'key'), '2');
@@ -40,14 +41,6 @@ export function testJSON():void {
     json = JSONBuilder.build();
     assert(JSONReader.getBoolByKey(json, 'abc'), '6');
 
-    JSONBuilder.putF64("abc", f64.MAX_SAFE_INTEGER);
-    json = JSONBuilder.build();
-    assert(f64.MAX_SAFE_INTEGER == JSONReader.getF64ByKey(json, 'abc'), '7');
-
-    JSONBuilder.putF64("abc", 0.3);
-    json = JSONBuilder.build();
-    assert(0.3 == JSONReader.getF64ByKey(json, 'abc'), '8');
-
 
     JSONBuilder.setBool(0, true);
     JSONBuilder.setString(1, "abc");
@@ -60,6 +53,8 @@ export function testJSON():void {
     json = JSONBuilder.build();
     let arr = JSONReader.getJSONByKey(json, 'key--ddd');
     assert(JSONReader.getBoolByIndex(arr, 0), '9');
+    log('10 abc = ' + JSONReader.getStringByIndex(arr, 1));
+    log(arr);
     assert(JSONReader.getStringByIndex(arr, 1) == 'abc', '10');
     assert(JSONReader.getI64ByIndex(arr, 2) == i64.MAX_VALUE, '11');
     assert(JSONReader.getI64ByIndex(arr, 3) == i64.MIN_VALUE, '12');
@@ -77,18 +72,11 @@ export function testJSON():void {
     assert(JSONReader.getI64ByIndex(arr, 2).toString() == '9223372036854775807', '17');
     assert(JSONReader.getI64ByIndex(arr, 3).toString() == '-9223372036854775808', '18');
     assert(JSONReader.getU64ByIndex(arr, 4).toString() == '18446744073709551615', '19');
-    assert (JSONReader.getF64ByIndex(
-        arr,
-        7
-    ) == 0.02, '20');
+
 
     json = '{"key":"value"}';
     JSONBuilder.setJSON(0, json);
     json = JSONBuilder.build();
     json = JSONReader.getJSONByIndex(json, 0);
     assert(JSONReader.getStringByKey(json, 'key') == 'value');
-
-    JSONBuilder.setF64(0, 0.5);
-    json = JSONBuilder.build();
-    assert(JSONReader.getF64ByIndex(json, 0) == 0.5);
 }
