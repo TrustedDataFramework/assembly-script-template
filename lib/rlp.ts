@@ -1,3 +1,5 @@
+import {log} from "./index";
+
 const OFFSET_SHORT_ITEM: u8 = 0x80;
 const SIZE_THRESHOLD: u8 = 56;
 const OFFSET_LONG_ITEM: u8 = 0xb7;
@@ -218,7 +220,7 @@ function encodeBytes(bytes: Uint8Array): Uint8Array {
     if (bytes.length < i32(SIZE_THRESHOLD)) {
         // length = 8X
         const length = OFFSET_SHORT_ITEM + bytes.length;
-        const ret: Uint8Array = new Uint8Array(bytes.length);
+        const ret: Uint8Array = new Uint8Array(bytes.length + 1);
         for (let i = 0; i < bytes.length; i++) {
             ret[i + 1] = bytes[i];
         }
