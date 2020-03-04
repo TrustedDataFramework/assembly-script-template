@@ -12,9 +12,9 @@ const transaction = {
     gasPrice: 100
 };
 
-transaction.payload = fs.readFileSync(path.join(__dirname, '..', 'build', 'decimal-test.wasm')).toString('hex');
+transaction.payload = fs.readFileSync(path.join(__dirname, '..', 'build', 'rlp-test.wasm')).toString('hex');
 
 axios
-    .post('http://localhost:8888/rpc/transaction', transaction)
+    .post('http://localhost:8084/rpc/transaction', transaction)
     .then(()=>{})
     .catch(() => console.error('err'));

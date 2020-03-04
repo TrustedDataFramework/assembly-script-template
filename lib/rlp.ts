@@ -29,7 +29,7 @@ class RLPParser {
         this.limit = limit;
     }
 
-    prefixLength() {
+    prefixLength(): u32{
         const prefix = this.buf[0];
         if (prefix <= OFFSET_LONG_ITEM) {
             return 1;
@@ -47,7 +47,7 @@ class RLPParser {
         return this.limit - this.offset;
     }
 
-    skip(n: u32) {
+    skip(n: u32): void{
         this.offset += n;
     }
 
@@ -215,9 +215,9 @@ function encodeBytes(bytes: Uint8Array): Uint8Array {
     if (bytes.length == 1 && (bytes[0] & 0xFF) < OFFSET_SHORT_ITEM) {
         return bytes;
     }
-    if (bytes.length < SIZE_THRESHOLD) {
+    if (bytes.length < i32(SIZE_THRESHOLD)) {
         // length = 8X
-        const length: u8 = OFFSET_SHORT_ITEM + bytes.length;
+        const length = OFFSET_SHORT_ITEM + bytes.length;
         const ret: Uint8Array = new Uint8Array(bytes.length);
         for (let i = 0; i < bytes.length; i++) {
             ret[i + 1] = bytes[i];
@@ -271,7 +271,7 @@ function encodeElements(elements: Array<Uint8Array>): Uint8Array {
         }
         tmpLength = totalLength;
         let lenBytes: Uint8Array = new Uint8Array(byteNum);
-        for (let i = 0; i < byteNum; ++i) {
+        for (let i = 0; i < i32(byteNum); ++i) {
             lenBytes[byteNum - 1 - i] = ((tmpLength >> (8 * i)) & 0xFF);
         }
         // first byte = F7 + bytes.length

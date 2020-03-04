@@ -12,6 +12,8 @@
     "asbuild:coin": "asc tests/coin.ts -b build/coin.wasm -t build/coin.wat --validate --sourceMap --debug",
     "asbuild:decimal": "asc tests/decimal-test.ts -b build/decimal-test.wasm -t build/decimal-test.wat --validate --sourceMap --debug",
     "asbuild:context-test": "asc tests/context-test.ts -b build/context-test.wasm -t build/context-test.wat --validate --sourceMap --optimize",
+    "asbuild:rlp-test": "asc tests/rlp-test.ts -b build/rlp-test.wasm -t build/rlp-test.wat --validate --sourceMap --optimize",
+
     "deploy": "node ./deploy.js"
   },
   "repository": {
