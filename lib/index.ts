@@ -25,9 +25,37 @@ export class Hex {
         }
         return out;
     }
+
+    private static hexToInt(x: u8): u8{
+        if(<u8>48 <= x && x <= <u8>57) return x - <u8>48;
+        if(<u8>97 <= x && x <= <u8>102) return x - <u8>87;
+        if(<u8>65 <= x && x <= <u8>70) return x - <u8>55;
+        _abort('invalid hex code', 'index.ts', 33, 33);
+        return 0;
+    }
+
+    static decode(s: string): Uint8Array{
+        assert(s.length % 2 == 0, 'invalid char');
+        const ret = new Uint8Array(s.length / 2);
+        for(let i: u32 = 0; i < u32(s.length/2) ; i++){
+            const h: u8 = u8(s.charCodeAt(i * 2));
+            const l: u8 = u8(s.charCodeAt(i * 2 + 1));
+            ret[i] = (Hex.hexToInt(h) << 4) + Hex.hexToInt(l);
+        }
+        return ret;
+    }
 }
 
-
+function _abort(
+    message: string | null,
+    fileName: string | null,
+    lineNumber: u32,
+    columnNumber: u32
+): void {
+    if (message === null || fileName === null) return;
+    // @ts-ignore
+    log(`ABORT: ${message} - ${fileName}:${lineNumber.toString()}`);
+}
 
 
 export * from './context';

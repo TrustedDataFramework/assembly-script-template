@@ -1,5 +1,3 @@
-import {log} from "./index";
-
 const OFFSET_SHORT_ITEM: u8 = 0x80;
 const SIZE_THRESHOLD: u8 = 56;
 const OFFSET_LONG_ITEM: u8 = 0xb7;
@@ -188,12 +186,7 @@ export class RLPItem {
 
     u64(): u64 {
         assert(this.data.length <= 8, 'not a u64');
-        let ret: u64 = 0;
-        for (let i: u32 = 0; i < u32(this.data.length); i++) {
-            const u: u32 = this.data[this.data.length - i - 1];
-            ret += (u << i)
-        }
-        return ret;
+        return byteArrayToInt(this.data);
     }
 
     bytes(): Uint8Array {
@@ -255,12 +248,12 @@ function encodeBytes(bytes: Uint8Array): Uint8Array {
     }
     if (u32(bytes.length) < SIZE_THRESHOLD) {
         // length = 8X
-        const length = OFFSET_SHORT_ITEM + bytes.length;
+        const prefix = OFFSET_SHORT_ITEM + bytes.length;
         const ret: Uint8Array = new Uint8Array(bytes.length + 1);
         for (let i = 0; i < bytes.length; i++) {
             ret[i + 1] = bytes[i];
         }
-        ret[0] = length;
+        ret[0] = prefix;
         return ret;
     }
     let tmpLength: u32 = bytes.length;

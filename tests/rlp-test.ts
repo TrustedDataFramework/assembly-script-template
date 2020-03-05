@@ -35,8 +35,17 @@ export function testEncode():void {
     assert(Hex.encode(RLP.encodeU64(0)) == '80');
     assert(Hex.encode(RLP.encodeU64(30303)) == '82765f');
     assert(Hex.encode(RLP.encodeU64(20202)) == '824eea');
+    assert(Hex.encode(RLP.encodeU64(65536)) == '83010000');
+    assert(Hex.encode(RLP.encodeU64(0x7fffffff)) == '847fffffff');
+    assert(Hex.encode(RLP.encodeU64(u64.MAX_VALUE)) == '88ffffffffffffffff');
+    assert(Hex.encode(RLP.encodeString('EthereumJ Client')) == '90457468657265756d4a20436c69656e74');
+
 }
 
 export function testDecode():void {
-    assert(RLPItem.fromEncoded(RLP.encodeU64(255)).u64() == 255);
+    const arr: Array<u64> = [255, 0, 30303, 20202, 65536, 0x7fffffff, u32.MAX_VALUE, u64.MAX_VALUE, i32.MAX_VALUE, i64.MAX_VALUE];
+    for (let i = 0; i < arr.length; i++) {
+        const el = arr[i];
+        assert(RLPItem.fromEncoded(RLP.encodeU64(el)).u64() == el);
+    }
 }
