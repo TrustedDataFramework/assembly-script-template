@@ -66,3 +66,4 @@ export * from './result';
 export * from './contract'
 export * from './event'
 export * from './rlp'
+export * from './db';

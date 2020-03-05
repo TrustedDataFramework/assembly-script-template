@@ -13,7 +13,7 @@
     "asbuild:decimal": "asc tests/decimal-test.ts -b build/decimal-test.wasm -t build/decimal-test.wat --validate --sourceMap --debug",
     "asbuild:context-test": "asc tests/context-test.ts -b build/context-test.wasm -t build/context-test.wat --validate --sourceMap --optimize",
     "asbuild:rlp-test": "asc tests/rlp-test.ts -b build/rlp-test.wasm -t build/rlp-test.wat --validate --sourceMap --optimize",
-
+    "asbuild:db-test": "asc tests/db-test.ts -b build/db-test.wasm -t build/db-test.wat --validate --sourceMap --optimize",
     "deploy": "node ./deploy.js"
   },
   "repository": {
