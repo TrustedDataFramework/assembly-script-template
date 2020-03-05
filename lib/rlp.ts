@@ -82,17 +82,17 @@ class RLPParser {
             return prefix - OFFSET_SHORT_ITEM + 1;
         }
         if (prefix < OFFSET_SHORT_LIST) {
-            return byteArrayToInt(
+            return u32(byteArrayToInt(
                 copyOfRange(this.buf, 1 + this.offset, 1 + this.offset + prefix - OFFSET_LONG_ITEM)
-            ) + 1 + prefix - OFFSET_LONG_ITEM;
+            ) + 1 + prefix - OFFSET_LONG_ITEM);
         }
         if (prefix <= OFFSET_LONG_LIST) {
             return prefix - OFFSET_SHORT_LIST + 1;
         }
-        return byteArrayToInt(
+        return u32(byteArrayToInt(
             copyOfRange(this.buf, 1 + this.offset, this.offset + 1 + prefix - OFFSET_LONG_LIST)
             )
-            + 1 + prefix - OFFSET_LONG_LIST;
+            + 1 + prefix - OFFSET_LONG_LIST);
     }
 
     u8(): u8 {
@@ -127,8 +127,8 @@ function intToByteArray(u: u64): Uint8Array{
 
 function byteArrayToInt(bytes: Uint8Array): u64 {
     let ret: u64 = 0;
-    for (let i = 0; i < bytes.length; i++) {
-        const u: u8 = bytes[bytes.length - i - 1];
+    for (let i: u32 = 0; i < u32(bytes.length); i++) {
+        const u = u64(bytes[bytes.length - i - 1]);
         ret += (u << (i * 8))
     }
     return ret;
@@ -189,8 +189,8 @@ export class RLPItem {
     u64(): u64 {
         assert(this.data.length <= 8, 'not a u64');
         let ret: u64 = 0;
-        for (let i = 0; i < this.data.length; i++) {
-            const u: u8 = this.data[this.data.length - i - 1];
+        for (let i: u32 = 0; i < u32(this.data.length); i++) {
+            const u: u32 = this.data[this.data.length - i - 1];
             ret += (u << i)
         }
         return ret;
