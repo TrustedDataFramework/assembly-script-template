@@ -7,10 +7,30 @@ const OFFSET_SHORT_LIST: u8 = 0xc0;
 const OFFSET_LONG_LIST: u8 = 0xf7;
 
 export class RLP {
+    // check the byte array was encoded from a list
     static isList(encoded: Uint8Array): bool {
         return encoded[0] >= OFFSET_SHORT_LIST;
     }
 
+    static encodeU64(u: u64): Uint8Array{
+        return encodeBytes(intToByteArray(u));
+    }
+
+    // encode a string
+    static encodeString(s: string): Uint8Array{
+        return encodeBytes(Uint8Array.wrap(String.UTF8.encode(s)));
+    }
+
+    // encode string list
+    static encodeStringArray(s: Array<string>): Uint8Array{
+        const elements: Array<Uint8Array> = new Array<Uint8Array>(s.length);
+        for(let i = 0; i < elements.length; i++){
+            elements[i] = this.encodeString(s[i]);
+        }
+        return encodeElements(elements);
+    }
+
+    // encode a byte array
     static encodeBytes(bytes: Uint8Array): Uint8Array {
         return encodeBytes(bytes);
     }
@@ -87,6 +107,22 @@ class RLPParser {
         this.offset += n;
         return ret;
     }
+}
+
+function intToByteArray(u: u64): Uint8Array{
+    const buf = new Uint8Array(8);
+    for(let i = 0; i < 8; i++){
+        buf[buf.length - 1 - i] = u8(u & 0xff);
+        u = u >>> 8;
+    }
+    let k = 8;
+    for(let i = 0; i < 8; i++){
+        if(buf[i] != 0){
+            k = i;
+            break;
+        }
+    }
+    return buf.slice(k, buf.length);
 }
 
 function byteArrayToInt(bytes: Uint8Array): u64 {
@@ -217,7 +253,7 @@ function encodeBytes(bytes: Uint8Array): Uint8Array {
     if (bytes.length == 1 && (bytes[0] & 0xFF) < OFFSET_SHORT_ITEM) {
         return bytes;
     }
-    if (bytes.length < i32(SIZE_THRESHOLD)) {
+    if (u32(bytes.length) < SIZE_THRESHOLD) {
         // length = 8X
         const length = OFFSET_SHORT_ITEM + bytes.length;
         const ret: Uint8Array = new Uint8Array(bytes.length + 1);
@@ -253,12 +289,12 @@ function encodeBytes(bytes: Uint8Array): Uint8Array {
 function encodeElements(elements: Array<Uint8Array>): Uint8Array {
     let totalLength: u32 = 0;
     for (let i = 0; i < elements.length; i++) {
-        totalLength += elements.length;
+        const el = elements[i];
+        totalLength += el.length;
     }
-
     let data: Uint8Array;
     let copyPos: u32;
-    if (totalLength < SIZE_THRESHOLD) {
+    if (totalLength < u32(SIZE_THRESHOLD)) {
         data = new Uint8Array(1 + totalLength);
         data[0] = OFFSET_SHORT_LIST + totalLength;
         copyPos = 1;
@@ -273,7 +309,7 @@ function encodeElements(elements: Array<Uint8Array>): Uint8Array {
         }
         tmpLength = totalLength;
         let lenBytes: Uint8Array = new Uint8Array(byteNum);
-        for (let i = 0; i < i32(byteNum); ++i) {
+        for (let i:u32 = 0; i < byteNum; ++i) {
             lenBytes[byteNum - 1 - i] = ((tmpLength >> (8 * i)) & 0xFF);
         }
         // first byte = F7 + bytes.length
@@ -286,8 +322,8 @@ function encodeElements(elements: Array<Uint8Array>): Uint8Array {
     }
     for (let i = 0; i < elements.length; i++) {
         const el: Uint8Array = elements[i];
-        for (let i = 0; i < el.length; i++) {
-            data[i + copyPos] = data[i];
+        for (let j = 0; j < el.length; j++) {
+            data[j + copyPos] = el[j];
         }
         copyPos += el.length;
     }
