@@ -1,5 +1,3 @@
-import {log} from "./index";
-
 enum Type{
     JSON,STRING,I64,U64,BOOL,F64
 }
@@ -22,19 +20,12 @@ declare function _json_builder_build_len(): usize;
 
 // @ts-ignore
 @external("env", "_json_reader_get_by_key")
-declare function _json_reader_get_by_key(type: u32, ptr: usize, ptr_len: usize, key_offset: usize, key_len: usize, dst: usize): u64;
-
-// @ts-ignore
-@external("env", "_json_reader_get_len_by_key")
-declare function _json_reader_get_len_by_key(type: u32, ptr: usize, ptr_len: usize, key_offset: usize, key_len: usize): usize;
+declare function _json_reader_get_by_key(type: u32, ptr: usize, ptr_len: usize, key_offset: usize, key_len: usize, dst: usize, put: u64): u64;
 
 // @ts-ignore
 @external("env", "_json_reader_get_by_index")
-declare function _json_reader_get_by_index(type:u32, ptr: usize, ptr_len: usize, idx: i32, dst: usize): u64;
+declare function _json_reader_get_by_index(type:u32, ptr: usize, ptr_len: usize, idx: i32, dst: usize, put: u64): u64;
 
-// @ts-ignore
-@external("env", "_json_reader_get_len_by_index")
-declare function _json_reader_get_len_by_index(type:u32, ptr: usize, ptr_len: usize, idx: i32): usize;
 
 
 // link to java JsonElement
@@ -100,67 +91,68 @@ export class JSONReader {
     static getJSONByKey(json: string, key: string): string {
         let buf_json: ArrayBuffer = String.UTF8.encode(json);
         let buf_key: ArrayBuffer = String.UTF8.encode(key);
-        let len = _json_reader_get_len_by_key(Type.JSON, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_key), buf_key.byteLength);
-        const ptr = new ArrayBuffer(len);
-        _json_reader_get_by_key(Type.JSON, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_key), buf_key.byteLength, changetype<usize>(ptr))
+        const len = _json_reader_get_by_key(Type.JSON, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_key), buf_key.byteLength, 0, 0);
+        const ptr = new ArrayBuffer(i32(len));
+        _json_reader_get_by_key(Type.JSON, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_key), buf_key.byteLength, changetype<usize>(ptr), 1)
         return String.UTF8.decode(ptr);
     }
 
     static getJSONByIndex(json: string, idx: i32): string {
         let buf_json: ArrayBuffer = String.UTF8.encode(json);
-        const len = _json_reader_get_len_by_index(Type.JSON, changetype<usize>(buf_json), buf_json.byteLength, idx);
+        const len = _json_reader_get_by_index(Type.JSON, changetype<usize>(buf_json), buf_json.byteLength, idx, 0, 0);
         const ptr = new ArrayBuffer(len);
-        _json_reader_get_by_index(Type.JSON, changetype<usize>(buf_json), buf_json.byteLength, idx, changetype<usize>(ptr));
+        _json_reader_get_by_index(Type.JSON, changetype<usize>(buf_json), buf_json.byteLength, idx, changetype<usize>(ptr), 1);
         return String.UTF8.decode(ptr);
     }
 
     static getStringByKey(json: string, name: string): string {
         let buf_json: ArrayBuffer = String.UTF8.encode(json);
         let buf_name: ArrayBuffer = String.UTF8.encode(name);
-        let len = _json_reader_get_len_by_key(Type.STRING, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_name), buf_name.byteLength);
+        let len = _json_reader_get_by_key(Type.STRING, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_name), buf_name.byteLength, 0, 0);
         const ptr = new ArrayBuffer(len);
-        _json_reader_get_by_key(Type.STRING, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_name), buf_name.byteLength, changetype<usize>(ptr));
+        _json_reader_get_by_key(Type.STRING, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_name), buf_name.byteLength, changetype<usize>(ptr), 1);
         return String.UTF8.decode(ptr);
     }
 
     static getStringByIndex(json: string, idx: i32): string {
         let buf_json: ArrayBuffer = String.UTF8.encode(json);
-        let buf = new ArrayBuffer(_json_reader_get_len_by_index(Type.STRING, changetype<usize>(buf_json), buf_json.byteLength, idx));
-        _json_reader_get_by_index(Type.STRING, changetype<usize>(buf_json), buf_json.byteLength, idx, changetype<usize>(buf));
+        const len = _json_reader_get_by_index(Type.STRING, changetype<usize>(buf_json), buf_json.byteLength, idx, 0, 0);
+        let buf = new ArrayBuffer(i32(len));
+        _json_reader_get_by_index(Type.STRING, changetype<usize>(buf_json), buf_json.byteLength, idx, changetype<usize>(buf), 1);
         return String.UTF8.decode(buf);
     }
 
     static getBoolByKey(json: string, key: string): bool {
         let buf_json: ArrayBuffer = String.UTF8.encode(json);
         let buf_key: ArrayBuffer = String.UTF8.encode(key);
-        return _json_reader_get_by_key(Type.BOOL, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_key), buf_key.byteLength, 0) != 0;
+        return _json_reader_get_by_key(Type.BOOL, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_key), buf_key.byteLength, 0, 0) != 0;
     }
 
     static getBoolByIndex(json: string, idx: i32): bool {
         let buf_json: ArrayBuffer = String.UTF8.encode(json);
-        return _json_reader_get_by_index(Type.BOOL, changetype<usize>(buf_json), buf_json.byteLength, idx, 0) != 0;
+        return _json_reader_get_by_index(Type.BOOL, changetype<usize>(buf_json), buf_json.byteLength, idx, 0, 0) != 0;
     }
 
     static getI64ByKey(json: string, key: string): i64 {
         let buf_json: ArrayBuffer = String.UTF8.encode(json);
         let buf_key: ArrayBuffer = String.UTF8.encode(key);
-        return _json_reader_get_by_key(Type.I64, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_key), buf_key.byteLength, 0)
+        return _json_reader_get_by_key(Type.I64, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_key), buf_key.byteLength, 0, 0);
     }
 
     static getI64ByIndex(json: string, idx: i32): i64 {
         let buf_json: ArrayBuffer = String.UTF8.encode(json);
-        return _json_reader_get_by_index(Type.I64, changetype<usize>(buf_json), buf_json.byteLength, idx, 0)
+        return _json_reader_get_by_index(Type.I64, changetype<usize>(buf_json), buf_json.byteLength, idx, 0, 0);
     }
 
     static getU64ByKey(json: string, key: string): u64 {
         let buf_json: ArrayBuffer = String.UTF8.encode(json);
         let buf_key: ArrayBuffer = String.UTF8.encode(key);
-        return _json_reader_get_by_key(Type.U64, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_key), buf_key.byteLength, 0);
+        return _json_reader_get_by_key(Type.U64, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_key), buf_key.byteLength, 0, 0);
     }
 
     static getU64ByIndex(json: string, idx: i32): u64 {
         let buf_json: ArrayBuffer = String.UTF8.encode(json);
-        return _json_reader_get_by_index(Type.U64, changetype<usize>(buf_json), buf_json.byteLength, idx, 0);
+        return _json_reader_get_by_index(Type.U64, changetype<usize>(buf_json), buf_json.byteLength, idx, 0, 0);
     }
 }
 
