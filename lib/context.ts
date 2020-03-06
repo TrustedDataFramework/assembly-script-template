@@ -1,152 +1,178 @@
 // @ts-ignore
-@external("env", "_context_transaction_hash")
-declare function _context_transaction_hash(str_offset: usize): void;
+import {RLPList} from "./rlp";
 
-// @ts-ignore
-@external("env", "_context_transaction_hash_len")
-declare function _context_transaction_hash_len(): usize;
+@external("env", "_context")
+declare function _context(dst: usize, arg1: u64): u64;
 
-// @ts-ignore
-@external("env", "_context_method")
-declare function _context_method(str_offset: usize): void;
+export enum TransactionType{
+    // coinbase transaction has code 0
+    COIN_BASE,
+    // the amount is transferred from sender to recipient
+    // if type is transfer, payload is null
+    // and fee is a constant
+    TRANSFER,
+    // if type is contract deploy, payload is wasm binary module
+    // fee = gasPrice * gasUsage
+    CONTRACT_DEPLOY,
+    // if type is contract call, payload = gasLimit(little endian, 8 bytes) +
+    // method name length (an unsigned byte) +
+    // method name(ascii string, [_a-zA-Z][_a-zA-Z0-9]*) +
+    // custom parameters, could be load by Parameters.load() in contract
+    // fee = gasPrice * gasUsage
+    // e.g.
 
-// @ts-ignore
-@external("env", "_context_method_len")
-declare function _context_method_len(): usize;
+    CONTRACT_CALL
+}
 
-// @ts-ignore
-@external("env", "_context_sender")
-declare function _context_sender(offset: usize): void;
+export class Header{
+    constructor(
+        readonly parentHash: Uint8Array,
+        readonly createdAt: u64,
+        readonly height: u64
+    ) {}
+}
 
-// @ts-ignore
-@external("env", "_context_sender_len")
-declare function _context_sender_len(): usize;
 
-// @ts-ignore
-@external("env", "_context_recipient")
-declare function _context_recipient(offset: usize): void;
+export class Transaction{
+    readonly method: string;
+    readonly parameters: Uint8Array
+    constructor(
+        readonly type: u32,
+        readonly createdAt: u64,
+        readonly nonce: u64,
+        readonly from: Uint8Array,
+        readonly gasPrice: u64,
+        readonly amount: u64,
+        readonly payload: Uint8Array,
+        readonly to: Uint8Array,
+        readonly signature: Uint8Array,
+        readonly hash: Uint8Array
+    ) {
+        this.method = type == TransactionType.CONTRACT_DEPLOY ? 'init' : this.methodFromPayload(payload);
+        this.parameters = type == TransactionType.CONTRACT_DEPLOY ? new Uint8Array(0) : this.parametersFromPayload(payload);
+    }
 
-// @ts-ignore
-@external("env", "_context_recipient_len")
-declare function _context_recipient_len(): usize;
+    private methodFromPayload(payload: Uint8Array): string{
+        const len = payload[0];
+        const buf = payload.slice(1, 1 + len);
+        return String.UTF8.decode(buf.buffer);
+    }
 
-// @ts-ignore
-@external("env", "_context_amount")
-declare function _context_amount(): usize;
+    private parametersFromPayload(payload: Uint8Array): Uint8Array{
+        const len = payload[0];
+        return payload.slice(1 + len);
+    }
+}
 
-// @ts-ignore
-@external("env", "_context_gas_price")
-declare function _context_gas_price(): usize;
+export class Contract{
+    constructor(
+        readonly address: Uint8Array,
+        readonly nonce: u64,
+        readonly createdBy: Uint8Array
+    ) {
+    }
+}
 
-// @ts-ignore
-@external("env", "_context_block_timestamp")
-declare function _context_block_timestamp(): usize;
+export class Arguments{
+    readonly method: string;
+    readonly parameters: Uint8Array;
 
-// @ts-ignore
-@external("env", "_context_transaction_timestamp")
-declare function _context_transaction_timestamp(): usize;
+    constructor(data: Uint8Array) {
+        const len = data[0];
+        const buf = data.slice(1, 1 + len);
+        this.method = String.UTF8.decode(buf.buffer);
+        this.parameters = data.slice(1 + len);
+    }
+}
 
-// @ts-ignore
-@external("env", "_context_block_height")
-declare function _context_block_height(): usize;
+class RLPListReader{
+    private index: u32;
+    constructor(readonly li: RLPList) {
+    }
 
-// @ts-ignore
-@external("env", "_context_parent_block_hash")
-declare function _context_parent_block_hash(offset: usize): void;
+    bytes(): Uint8Array{
+        const ret = this.li.getItem(this.index).bytes();
+        this.index++;
+        return ret;
+    }
 
-// @ts-ignore
-@external("env", "_context_parent_block_hash_len")
-declare function _context_parent_block_hash_len(): usize;
+    list(): RLPList{
+        const ret = this.li.getList(this.index);
+        this.index++;
+        return ret;
+    }
 
-// @ts-ignore
-@external("env", "_context_nonce")
-declare function _context_nonce(): u64;
+    reader(): RLPListReader{
+        return new RLPListReader(this.list());
+    }
 
-// @ts-ignore
-@external("env", "_context_signature_len")
-declare function _context_signature_len(): usize;
+    u8(): u8{
+        const ret = this.li.getItem(this.index).u8();
+        this.index++;
+        return ret;
+    }
 
-// @ts-ignore
-@external("env", "_context_signature")
-declare function _context_signature(offset: usize): void;
-
-// @ts-ignore
-@external("env", "_context_available")
-declare function _context_available(): u64;
-
+    u64(): u64{
+        const ret = this.li.getItem(this.index).u64();
+        this.index++;
+        return ret;
+    }
+}
 
 /**
  * context.load() is only available when deploy/call contract
  */
 export class Context{
-    static load(): Context{
-        assert(_context_available() > 0, 'Context.load() is not available');
-        const transactionHash_len: usize = _context_transaction_hash_len();
-        const transactionHash_buf: ArrayBuffer = new ArrayBuffer(transactionHash_len);
-        _context_transaction_hash(changetype<usize>(transactionHash_buf));
-        const transactionHash: Uint8Array = Uint8Array.wrap(transactionHash_buf);
+    private static context(): RLPList{
+        const len = _context(0, 0);
+        const buf = new ArrayBuffer(i32(len));
+        _context(changetype<usize>(buf), 1);
+        return RLPList.fromEncoded(Uint8Array.wrap(buf));
+    }
 
-        const method_len: usize = _context_method_len();
-        const method_buf: ArrayBuffer = new ArrayBuffer(method_len);
-        _context_method(changetype<usize>(method_buf));
-        const method: string = String.UTF8.decode(method_buf);
+    static header(): Header{
+        const context = Context.context();
+        assert(!context.isNull(0), 'header is not available');
+        const reader = new RLPListReader(context.getList(0));
+        return new Header(reader.bytes(), reader.u64(), reader.u64());
+    }
 
-        const sender_len: usize = _context_sender_len();
-        const sender_buf: ArrayBuffer = new ArrayBuffer(sender_len);
-        _context_sender(changetype<usize>(sender_buf));
-        const sender: Uint8Array = Uint8Array.wrap(sender_buf);
+    static transaction(): Transaction{
+        const context = Context.context();
+        assert(!context.isNull(1), 'transaction is not available');
+        const reader = new RLPListReader(context.getList(1));
 
-        const recipient_len: usize = _context_recipient_len();
-        const recipient_buf: ArrayBuffer = new ArrayBuffer(recipient_len);
-        _context_recipient(changetype<usize>(recipient_buf));
-        const recipient: Uint8Array =  Uint8Array.wrap(recipient_buf);
-
-
-        const parentBlockHash_len: usize = _context_parent_block_hash_len();
-        const parentBlockHash_buf: ArrayBuffer = new ArrayBuffer(parentBlockHash_len);
-        _context_parent_block_hash(changetype<usize>(parentBlockHash_buf));
-
-        const signature_len: usize = _context_signature_len();
-        const signature_buf: ArrayBuffer = new ArrayBuffer(signature_len);
-        _context_signature(changetype<usize>(signature_buf));
-        return new Context(
-            transactionHash,
-            method,
-            _context_nonce(),
-            sender,
-            recipient,
-            _context_amount(),
-            _context_gas_price(),
-            _context_block_timestamp(),
-            _context_transaction_timestamp(),
-            _context_block_height(),
-            Uint8Array.wrap(parentBlockHash_buf),
-            Uint8Array.wrap(signature_buf)
+        return new Transaction(
+            reader.u8(),
+            reader.u64(),
+            reader.u64(),
+            reader.bytes(),
+            reader.u64(),
+            reader.u64(),
+            reader.bytes(),
+            reader.bytes(),
+            reader.bytes(),
+            reader.bytes()
         );
     }
 
-    // TODO: parse block chain context
-    // 1. transaction_hash
-    // 2. from
-    // 3. to
-    // 4. amount, in contract call transaction, amount will be transfer to contract creator
-    // 5. gas price
-    // 6. block timestamp
-    // 7. transaction timestamp
-    // 8. block height
-    // 9. parent block hash
-    private constructor(readonly transactionHash: Uint8Array,
-                readonly method: string,
-                readonly nonce: u64,
-                readonly from: Uint8Array,
-                readonly to: Uint8Array,
-                readonly amount: u64,
-                readonly gasPrice: u64,
-                readonly blockTimestamp: u64,
-                readonly transactionTimestamp: u64,
-                readonly blockHeight: u64,
-                readonly parentBlockHash: Uint8Array,
-                readonly signature: Uint8Array
-    ) {
+    static contract(): Contract{
+        const context = Context.context();
+        assert(!context.isNull(2), 'contract is not available');
+        const reader = new RLPListReader(context.getList(2));
+        return new Contract(
+            reader.bytes(),
+            reader.u64(),
+            reader.bytes()
+        );
+    }
+
+    static args(): Arguments{
+        const context = Context.context();
+        assert(!context.isNull(3), 'arguments is not available');
+        const item = context.getItem(3);
+        return new Arguments(
+            item.bytes()
+        );
     }
 }

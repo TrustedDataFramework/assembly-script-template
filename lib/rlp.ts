@@ -14,6 +14,10 @@ export class RLP {
         return encodeBytes(intToByteArray(u));
     }
 
+    static decodeString(encoded: Uint8Array): string{
+        return RLPItem.fromEncoded(encoded).string();
+    }
+
     // encode a string
     static encodeString(s: string): Uint8Array{
         return encodeBytes(Uint8Array.wrap(String.UTF8.encode(s)));
@@ -165,7 +169,10 @@ export class RLPItem {
         assert(!RLP.isList(encoded), 'not a rlp item');
         validateSize(encoded);
         const parser = new RLPParser(encoded, 0, encoded.length);
-        parser.skip(parser.prefixLength());
+        const prefixLength = parser.prefixLength();
+        if(prefixLength > 1){
+            parser.skip(parser.prefixLength());
+        }
         return new RLPItem(parser.bytes(parser.remained()));
     }
 
@@ -195,6 +202,10 @@ export class RLPItem {
 
     string(): string {
         return String.UTF8.decode(this.data.buffer);
+    }
+
+    isNull(): bool{
+        return this.data.length == 0;
     }
 }
 
@@ -233,6 +244,10 @@ export class RLPList {
 
     getRaw(index: u32): Uint8Array {
         return this.elements[index];
+    }
+
+    isNull(index: u32): bool{
+        return this.elements[index].length == 1 && this.elements[index][0] == 0x80;
     }
 }
 
