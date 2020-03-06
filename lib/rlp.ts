@@ -1,5 +1,3 @@
-import {log} from "./index";
-
 const OFFSET_SHORT_ITEM: u8 = 0x80;
 const SIZE_THRESHOLD: u8 = 56;
 const OFFSET_LONG_ITEM: u8 = 0xb7;
@@ -56,7 +54,7 @@ class RLPParser {
     }
 
     prefixLength(): u32{
-        const prefix = this.buf[0];
+        const prefix = this.buf[this.offset];
         if (prefix <= OFFSET_LONG_ITEM) {
             return 1;
         }
@@ -78,7 +76,7 @@ class RLPParser {
     }
 
     peekSize(): u32 {
-        const prefix = this.buf[0];
+        const prefix = this.buf[this.offset];
         if (prefix < OFFSET_SHORT_ITEM) {
             return 1;
         }
