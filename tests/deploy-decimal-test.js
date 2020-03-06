@@ -12,7 +12,7 @@ const transaction = {
     gasPrice: 100
 };
 
-transaction.payload = fs.readFileSync(path.join(__dirname, '..', 'build', 'db-test.wasm')).toString('hex');
+transaction.payload = fs.readFileSync(path.join(__dirname, '..', 'build', 'context-test.wasm')).toString('hex');
 
 
 axios

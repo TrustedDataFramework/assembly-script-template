@@ -1,37 +1,30 @@
-import {Context, Hex, JSONBuilder, Decimal, log, Result, JSONReader, Contract, Parameters} from "../lib";
+import {Context, Hex, log} from "../lib";
 
 
 // every contract should had a function named by init
 // which will be called at most once when contract deployed
 export function init(): void{
     testContext();
-    log('contract address = ' + Hex.encode(Contract.load().address));
+    log('success + ===============')
 }
 
 export function invoke(): void{
-    const p = Parameters.load();
-    assert(p.method == 'invoke');
+    testContext();
     log('invoked');
 }
 
 
 
 export function testContext(): void{
-    let ctx: Context = Context.load();
-    assert(ctx.method == 'init');
-    assert(Hex.encode(ctx.from) == '87b8f0b097b48b282a5c661babc8096e141bd9fb');
-    assert(Hex.encode(ctx.to) == '');
-    assert(Hex.encode(ctx.transactionHash) != '');
-    assert(ctx.gasPrice == 100);
-    assert(ctx.transactionTimestamp > 0);
-    assert(ctx.blockTimestamp > 0);
-    assert(ctx.blockHeight > 0);
-    assert(Hex.encode(ctx.parentBlockHash) != '');
-    assert(ctx.amount == 0);
-    assert(Hex.encode(ctx.signature) == 'ff');
-    assert(ctx.nonce >= 1);
+    const header = Context.header();
+    const transaction = Context.transaction();
+    const contract = Context.contract();
 
-    const contract = Contract.load();
+    log('parenthash = ' + Hex.encode(header.parentHash));
+    log('height = ' + header.height.toString());
+
+
+    log('contract nonce = ' + contract.nonce.toString())
     assert(contract.address.byteLength == 20);
-    assert(Hex.encode(contract.createdBy) == '87b8f0b097b48b282a5c661babc8096e141bd9fb');
+    log('contract created by: ' + Hex.encode(contract.createdBy));
 }

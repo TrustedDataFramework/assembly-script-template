@@ -203,6 +203,10 @@ export class RLPItem {
     string(): string {
         return String.UTF8.decode(this.data.buffer);
     }
+
+    isNull(): bool{
+        return this.data.length == 0;
+    }
 }
 
 export class RLPList {
@@ -240,6 +244,10 @@ export class RLPList {
 
     getRaw(index: u32): Uint8Array {
         return this.elements[index];
+    }
+
+    isNull(index: u32): bool{
+        return this.elements[index].length == 1 && this.elements[index][0] == 0x80;
     }
 }
 

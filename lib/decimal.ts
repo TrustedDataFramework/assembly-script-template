@@ -10,7 +10,7 @@ declare function _decimal(type: u32,
                           y_offset: usize, y_len: usize,
                           arg1: u64, arg2: u64,
                           put: u64
-): i32;
+): u64;
 
 
 // decimal will not be stored in memory
@@ -21,7 +21,7 @@ export class Decimal{
         const str_x = String.UTF8.encode(x);
         const str_y = String.UTF8.encode(y);
         const len = _decimal(Type.ADD, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength, 0, 0, 0);
-        const result_buf = new ArrayBuffer(len);
+        const result_buf = new ArrayBuffer(i32(len));
         _decimal(Type.ADD, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength, changetype<usize>(result_buf), 0,1);
         return String.UTF8.decode(result_buf);
     }
@@ -36,16 +36,16 @@ export class Decimal{
     static mul(x: string, y: string): string{
         const str_x = String.UTF8.encode(x);
         const str_y = String.UTF8.encode(y);
-        const result = _decimal(Type.MUL, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength, 0, 0, 0);
-        const result_buf = new ArrayBuffer(result);
+        const len = _decimal(Type.MUL, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength, 0, 0, 0);
+        const result_buf = new ArrayBuffer(i32(len));
         _decimal(Type.MUL, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y),str_y.byteLength, changetype<usize>(result_buf),0,1);
         return String.UTF8.decode(result_buf);
     }
     static div(x: string, y: string, precision: i32): string{
         const str_x = String.UTF8.encode(x);
         const str_y = String.UTF8.encode(y);
-        const result: usize = _decimal(Type.DIV, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y), str_y.byteLength,0,precision, 0);
-        const result_buf = new ArrayBuffer(result);
+        const len = _decimal(Type.DIV, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y), str_y.byteLength,0,precision, 0);
+        const result_buf = new ArrayBuffer(i32(len));
         _decimal(Type.DIV, changetype<usize>(str_x),str_x.byteLength,changetype<usize>(str_y), str_y.byteLength, changetype<usize>(result_buf), precision, 1);
         return String.UTF8.decode(result_buf);
     }
