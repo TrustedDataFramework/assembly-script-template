@@ -58,7 +58,7 @@ export function testDecode(): void {
     const arr: Array<u64> = [255, 0, 30303, 20202, 65536, 0x7fffffff, u32.MAX_VALUE, u64.MAX_VALUE, i32.MAX_VALUE, i64.MAX_VALUE];
     for (let i = 0; i < arr.length; i++) {
         const el = arr[i];
-        assert(RLPItem.fromEncoded(RLP.encodeU64(el)).u64() == el);
+        assert(RLPItem.fromEncoded(RLP.encodeU64(el)).u64() == el, el.toString() + ' ' + RLPItem.fromEncoded(RLP.encodeU64(el)).u64().toString());
     }
 }
 

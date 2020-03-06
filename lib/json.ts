@@ -109,7 +109,7 @@ export class JSONReader {
         let buf_json: ArrayBuffer = String.UTF8.encode(json);
         let buf_name: ArrayBuffer = String.UTF8.encode(name);
         let len = _json_reader_get_by_key(Type.STRING, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_name), buf_name.byteLength, 0, 0);
-        const ptr = new ArrayBuffer(len);
+        const ptr = new ArrayBuffer(i32(len));
         _json_reader_get_by_key(Type.STRING, changetype<usize>(buf_json), buf_json.byteLength, changetype<usize>(buf_name), buf_name.byteLength, changetype<usize>(ptr), 1);
         return String.UTF8.decode(ptr);
     }

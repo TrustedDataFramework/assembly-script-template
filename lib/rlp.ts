@@ -14,9 +14,14 @@ export class RLP {
         return encodeBytes(intToByteArray(u));
     }
 
+    static decodeU64(u: Uint8Array): u64{
+        return RLPItem.fromEncoded(u).u64();
+    }
+
     static decodeString(encoded: Uint8Array): string{
         return RLPItem.fromEncoded(encoded).string();
     }
+
 
     // encode a string
     static encodeString(s: string): Uint8Array{
@@ -169,8 +174,9 @@ export class RLPItem {
         assert(!RLP.isList(encoded), 'not a rlp item');
         validateSize(encoded);
         const parser = new RLPParser(encoded, 0, encoded.length);
-        const prefixLength = parser.prefixLength();
-        if(prefixLength > 1){
+        if(encoded.length == 1 && encoded[0] == 0x80)
+            return RLPItem.NULL;
+        if(parser.remained() > 1){
             parser.skip(parser.prefixLength());
         }
         return new RLPItem(parser.bytes(parser.remained()));

@@ -30,7 +30,6 @@ export class Hex {
         if(<u8>48 <= x && x <= <u8>57) return x - <u8>48;
         if(<u8>97 <= x && x <= <u8>102) return x - <u8>87;
         if(<u8>65 <= x && x <= <u8>70) return x - <u8>55;
-        _abort('invalid hex code', 'index.ts', 33, 33);
         return 0;
     }
 
@@ -45,18 +44,6 @@ export class Hex {
         return ret;
     }
 }
-
-function _abort(
-    message: string | null,
-    fileName: string | null,
-    lineNumber: u32,
-    columnNumber: u32
-): void {
-    if (message === null || fileName === null) return;
-    // @ts-ignore
-    log(`ABORT: ${message} - ${fileName}:${lineNumber.toString()}`);
-}
-
 
 export * from './context';
 export * from './decimal';

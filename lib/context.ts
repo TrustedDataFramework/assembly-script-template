@@ -1,6 +1,7 @@
-// @ts-ignore
 import {RLPList} from "./rlp";
+import {Hash} from "./hash";
 
+// @ts-ignore
 @external("env", "_context")
 declare function _context(dst: usize, arg1: u64): u64;
 
@@ -35,12 +36,13 @@ export class Header{
 
 export class Transaction{
     readonly method: string;
-    readonly parameters: Uint8Array
+    readonly parameters: Uint8Array;
+    readonly from: Uint8Array;
     constructor(
         readonly type: u32,
         readonly createdAt: u64,
         readonly nonce: u64,
-        readonly from: Uint8Array,
+        from: Uint8Array,
         readonly gasPrice: u64,
         readonly amount: u64,
         readonly payload: Uint8Array,
@@ -48,8 +50,11 @@ export class Transaction{
         readonly signature: Uint8Array,
         readonly hash: Uint8Array
     ) {
+        assert(type == TransactionType.CONTRACT_DEPLOY || type == TransactionType.CONTRACT_CALL, 'context not allowed here');
         this.method = type == TransactionType.CONTRACT_DEPLOY ? 'init' : this.methodFromPayload(payload);
         this.parameters = type == TransactionType.CONTRACT_DEPLOY ? new Uint8Array(0) : this.parametersFromPayload(payload);
+        const digest = Hash.sm3(from);
+        this.from = digest.slice(digest.length - 20, digest.length);
     }
 
     private methodFromPayload(payload: Uint8Array): string{
