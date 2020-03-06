@@ -17,14 +17,9 @@ export function invoke(): void{
 
 export function testContext(): void{
     const header = Context.header();
-    const transaction = Context.transaction();
-    const contract = Context.contract();
+
 
     log('parenthash = ' + Hex.encode(header.parentHash));
     log('height = ' + header.height.toString());
 
-
-    log('contract nonce = ' + contract.nonce.toString())
-    assert(contract.address.byteLength == 20);
-    log('contract created by: ' + Hex.encode(contract.createdBy));
 }

@@ -1,3 +1,5 @@
+import {log} from "./index";
+
 const OFFSET_SHORT_ITEM: u8 = 0x80;
 const SIZE_THRESHOLD: u8 = 56;
 const OFFSET_LONG_ITEM: u8 = 0xb7;
@@ -224,8 +226,7 @@ export class RLPList {
         parser.skip(parser.prefixLength());
         const ret = new RLPList([]);
         while (parser.remained() > 0) {
-            const len = parser.peekSize();
-            ret.elements.push(parser.bytes(parser.prefixLength() + len));
+            ret.elements.push(parser.bytes(parser.peekSize()));
         }
         return ret;
     }
