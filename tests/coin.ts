@@ -19,8 +19,8 @@ export function charge(): void{
     if(DB.has(t.from)){
         balance = RLP.decodeU64(DB.get(t.from));
     }
-
-    DB.set(t.from, RLP.encodeU64(balance + t.amount));
+    balance += t.amount;
+    DB.set(t.from, RLP.encodeU64(balance));
     log('charge to address ' + Hex.encode(t.from) + " success, balance = " + balance.toString() + " after charge");
 }
 

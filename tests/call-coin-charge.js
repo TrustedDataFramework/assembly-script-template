@@ -1,15 +1,20 @@
+const from =
+    '02f9d915954e04107d11fb9689a6330c22199e1e830857bff076e033bbca2888d4';
+
+const entry = 'http://localhost:7080';
+const count = 1000;
 const axios = require('axios');
 
 const transaction = {
     version: 1634693120,
     type: 3,
-    from: '02b5e348618a86fcd42ced0d6b64737f4a3674237ad83c39fd968db0f59a46fe88',
+    from: from,
     signature: 'ff',
     createdAt: Math.floor(Date.now() / 1000),
-    nonce: 3,
-    gasPrice: 100,
-    amount: 10000,
-    to: 'a0e226637d90ab17a731e6ac264004624ebc7b36'
+    nonce: 2,
+    gasPrice: 1,
+    amount: 1,
+    to: 'e8a71957d03e72210275e0b5a18614861adfd3b1'
 };
 
 transaction.payload = Buffer.concat(
@@ -21,7 +26,22 @@ transaction.payload = Buffer.concat(
 
 transaction.payload = transaction.payload.toString('hex');
 
-axios
-    .post('http://localhost:8888/rpc/transaction', transaction)
-    .then(()=>{})
-    .catch(() => console.error('err'));
+
+const fn = () => axios
+    .get(`${entry}/rpc/account/${from}`)
+    .then(resp => resp.data)
+    .then(data => {
+        const body = [];
+        transaction.nonce = data.data.nonce + 1;
+        for (let i = 0; i < count; i++) {
+            body.push(JSON.parse(JSON.stringify(transaction)));
+            transaction.nonce++;
+        }
+        return axios.post(`${entry}/rpc/transaction`, body);
+    })
+    .then(() => console.log('success'))
+    .catch(console.error);
+
+
+setInterval(fn , 3000);
+

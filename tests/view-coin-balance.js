@@ -4,12 +4,12 @@ const parameters = Buffer.concat(
     [
         Buffer.from(['getBalance'.length]),
         Buffer.from('getBalance', 'ascii'),
-        Buffer.from(`{"address": "38842c0c2c4caadaf88af398777f274637c3dbce"}`, 'ascii')
+        Buffer.from(`{"address": "f5cdfdff8e0ed4dd72474862f619c5ca54de4364"}`, 'ascii')
     ]
 );
 
 axios
-    .get('http://localhost:8888/rpc/contract/a0e226637d90ab17a731e6ac264004624ebc7b36?parameters=' + parameters.toString('hex'))
+    .get('http://localhost:30501/rpc/contract/e8a71957d03e72210275e0b5a18614861adfd3b1?parameters=' + parameters.toString('hex'))
     .then(resp => resp.data)
     .then(x => {
         console.log(x);
