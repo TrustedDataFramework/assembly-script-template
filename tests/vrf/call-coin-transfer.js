@@ -1,10 +1,10 @@
-const axios = require('axios');
-const entry = 'http://localhost:8080';
-const fromPubKey = '02f9d915954e04107d11fb9689a6330c22199e1e830857bff076e033bbca2888d4';
-const contractAddr = 'e8a71957d03e72210275e0b5a18614861adfd3b1';
-const toAddr = '54e670985631117904d10341676a57d11687bbc5';
+const rpcBaseUrl = 'http://localhost:8080';
+const fromPubKey = '03f5058c783199b83259b11d44a30255faaada47270baa6aa132efd2366ea4b304';
+const contractAddr = 'f22418525df37b0bc25ccb3bf4a33d1d16af68f7';
+const toAddr = 'ac9019a3c01be5056af55b43c510c3203bb9fc62';
 const amount = 20;
 
+const axios = require('axios');
 const transaction = {
     version: 1634693120,
     type: 3,
@@ -28,7 +28,7 @@ transaction.payload = Buffer.concat(
 transaction.payload = transaction.payload.toString('hex');
 
 axios
-    .get(`${entry}/rpc/account/${fromPubKey}`)
+    .get(`${rpcBaseUrl}/rpc/account/${fromPubKey}`)
     .then(resp => resp.data)
     .then(data => {
         const body = [];
@@ -36,7 +36,7 @@ axios
           console.log('Nonce: '+transaction.nonce)
           body.push(JSON.parse(JSON.stringify(transaction)));
           transaction.nonce++;
-        return axios.post(`${entry}/rpc/transaction`, body);
+        return axios.post(`${rpcBaseUrl}/rpc/transaction`, body);
     })
     .then(() =>
   console.log('success'))

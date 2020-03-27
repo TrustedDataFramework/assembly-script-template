@@ -15,6 +15,6 @@ const transaction = {
 transaction.payload = fs.readFileSync(path.join(__dirname, '..', 'build', 'coin.wasm')).toString('hex');
 
 axios
-    .post('http://localhost:30501/rpc/transaction', transaction)
+    .post('http://localhost:8080/rpc/transaction', transaction)
     .then(()=>{})
     .catch(() => console.error('err'));
