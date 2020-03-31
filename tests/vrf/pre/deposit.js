@@ -1,7 +1,7 @@
 const rpcBaseUrl = 'http://localhost:8080';
 const contractAddr = '0000000000000000000000000000000000000001';
 const fromPubKey = '03db73ea4b9eb3f0f9d46034f194ba098229841133467a209070207b75a202db8b';
-const amount = 987;
+const amount = 1000;
 
 const axios = require('axios');
 
