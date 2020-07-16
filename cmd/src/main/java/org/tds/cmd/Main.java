@@ -12,10 +12,10 @@ import org.tdf.crypto.sm2.SM2PrivateKey;
 import org.tdf.crypto.sm2.SM2PublicKey;
 import org.tdf.gmhelper.SM2Util;
 import org.tdf.gmhelper.SM3Util;
+import org.tdf.sunflower.consensus.poa.PoAConstants;
 import org.tdf.sunflower.state.Address;
 import org.tdf.sunflower.types.CryptoContext;
 import org.tdf.sunflower.types.Transaction;
-import org.tds.cmd.util.ASCWrapper;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -33,10 +33,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 
 public class Main {
-    @Parameter(names={"--version", "-v"})
-    private int version;
-    @Parameter(names={"--entryPoint", "-e"})
-    private int entryPoint;
     @Parameter(names={"--source", "-s"})
     private String source;
     @Parameter(names={"--privateKey", "-p"})
@@ -73,7 +69,6 @@ public class Main {
     public void run() throws IOException {
         ObjectMapper objectMapper= new ObjectMapper();
         HexBytes publicKey = HexBytes.fromBytes(CryptoContext.getPkFromSk(HexBytes.decode(privateKey)));;
-        System.out.println(publicKey.toHex());
         HexBytes address = Address.fromPublicKey(publicKey);
         long nonce = 0L;
         String getUrl = "http://" + host + ":" + port + "/rpc/account/" + address.toHex();
@@ -85,10 +80,9 @@ public class Main {
             JsonNode n = objectMapper.readValue(data, JsonNode.class);
             nonce = n.get("data").get("nonce").asLong() + 1;
         }
-        System.out.println(nonce);
         Transaction tx = new Transaction(
-                version,
-                entryPoint,
+                PoAConstants.TRANSACTION_VERSION,
+                Transaction.Type.CONTRACT_DEPLOY.code,
                 System.currentTimeMillis() / 1000,
                 nonce,
                 publicKey,
@@ -98,7 +92,6 @@ public class Main {
                 HexBytes.EMPTY
         );
         String cmd = ascPath + " " + source +  " --optimize -b";
-        System.out.println(cmd);
         Process p = Runtime.getRuntime().exec(cmd);
         InputStream in = p.getInputStream();
         byte[] payload = IOUtils.toByteArray(in);
