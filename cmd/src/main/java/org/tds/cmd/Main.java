@@ -26,6 +26,8 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
 import java.io.IOException;
+import java.io.InputStream;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -58,7 +60,7 @@ public class Main {
         CryptoContext.setHashFunction(SM3Util::hash);
     }
 
-    public static void main(String ... args) throws IOException, InterruptedException {
+    public static void main(String ... args) throws IOException {
         initCryptoContext();
         Main m = new Main();
         JCommander.newBuilder()
@@ -68,7 +70,7 @@ public class Main {
         m.run();
     }
 
-    public void run() throws IOException, InterruptedException {
+    public void run() throws IOException {
         ObjectMapper objectMapper= new ObjectMapper();
         HexBytes publicKey = HexBytes.fromBytes(CryptoContext.getPkFromSk(HexBytes.decode(privateKey)));;
         System.out.println(publicKey.toHex());
@@ -97,16 +99,13 @@ public class Main {
         );
         String cmd = ascPath + " " + source +  " --optimize -b";
         System.out.println(cmd);
-        Process p = Runtime.getRuntime().exec("cmd /c " + cmd);
-        p.waitFor();
-        byte[] error = IOUtils.toByteArray(p.getErrorStream());
-        if(error != null && error.length > 0){
-            throw new RuntimeException(new String(error));
-        }
-        byte[] payload = IOUtils.toByteArray(p.getInputStream());
+        Process p = Runtime.getRuntime().exec(cmd);
+        InputStream in = p.getInputStream();
+        byte[] payload = IOUtils.toByteArray(in);
         tx.setPayload(HexBytes.fromBytes(payload));
-        byte[] sig = CryptoContext.sign(privateKey.getBytes(), tx.getSignaturePlain());
+        byte[] sig = CryptoContext.sign(HexBytes.fromHex(privateKey).getBytes(), tx.getSignaturePlain());
         tx.setSignature(HexBytes.fromBytes(sig));
+        System.out.println("deploy contract " + source + " address = " + tx.createContractAddress());
         String postUrl = "http://" + host + ":" + port + "/rpc/transaction";
         HttpPost post = new HttpPost(postUrl);
         HttpEntity entity = new StringEntity(objectMapper.writeValueAsString(tx), ContentType.APPLICATION_JSON);
