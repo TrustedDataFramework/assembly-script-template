@@ -1,0 +1,7 @@
+{
+  "version": "",
+  "entry-point": "",
+  "source": "assembly/index.ts",
+  "private-key": "",
+  "asc-path": "node_modules/.bin/asc"
+}
