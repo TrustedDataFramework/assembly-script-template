@@ -30,9 +30,11 @@ public class Main {
         initCryptoContext();
         Deploy d = new Deploy();
         Compile c = new Compile();
+        Init init = new Init();
         JCommander jc = JCommander.newBuilder()
                 .addCommand("deploy", d)
                 .addCommand("compile", c)
+                .addCommand("init", init)
                 .build();
         jc.parse(args);
         switch (jc.getParsedCommand()) {
@@ -41,6 +43,9 @@ public class Main {
                 break;
             case "deploy":
                 d.run();
+                break;
+            case "init":
+                init.run();
                 break;
             default:
                 throw new RuntimeException("invalid args");
