@@ -17,6 +17,10 @@ public class AscWrapper {
         String cmd = ascPath + " " + source + " --optimize -b";
         Process p = Runtime.getRuntime().exec(cmd);
         InputStream in = p.getInputStream();
+        byte[] error = IOUtils.toByteArray(p.getErrorStream());
+        if(error != null && error.length > 0){
+            throw new RuntimeException(new String(error));
+        }
         return IOUtils.toByteArray(in);
     }
 }
