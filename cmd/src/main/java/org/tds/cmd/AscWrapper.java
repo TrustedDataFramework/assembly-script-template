@@ -6,6 +6,9 @@ import lombok.SneakyThrows;
 import org.apache.tika.io.IOUtils;
 
 import java.io.InputStream;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
 public class AscWrapper {
@@ -17,7 +20,21 @@ public class AscWrapper {
         String cmd = ascPath + " " + source + " --optimize -b";
         Process p = Runtime.getRuntime().exec(cmd);
         InputStream in = p.getInputStream();
-        byte[] error = IOUtils.toByteArray(p.getErrorStream());
+
+        Future<byte[]> errorFuture =
+                CompletableFuture.supplyAsync(() -> {
+                    try{
+                        return IOUtils.toByteArray(p.getErrorStream());
+                    }catch (Exception e){
+                        e.printStackTrace();
+                        return new byte[0];
+                    }
+                });
+
+        byte[] error = new byte[0];
+        try{
+            error = errorFuture.get(3, TimeUnit.SECONDS);
+        }catch (Exception ignored){}
         if(error != null && error.length > 0){
             throw new RuntimeException(new String(error));
         }
