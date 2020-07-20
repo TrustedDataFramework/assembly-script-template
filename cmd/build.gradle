@@ -48,3 +48,20 @@ dependencies {
     compile "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
 
 }
+
+
+task copyDependencies(type: Copy) {
+    from configurations.runtime
+    destinationDir = file('build/libs/lib')
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.tds.cmd.Main'
+        attributes 'Class-Path': '. ' + configurations.compile.collect { 'lib/' + it.getName() }.join(' ')
+    }
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    } {exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'}
+}
