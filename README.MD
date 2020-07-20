@@ -1,32 +1,27 @@
 # assembly script contract code template
 
-## build wasm binary
+## compile only
 
-```shell script
-npm run asbuild
-```
+1. clone or download this repository
 
-## deploy contract
+2. execute `npm install` to install dependencies
 
-```shell script
-node ./deploy.js
-```
+3. write your contract code at assembly/index.ts
 
-## 代币合约
+4. execute command `java -jar cmd-*.jar compile -s assembly/index.ts -o index.wasm -a node_modules/.bin/asc`
 
-```shell script
-# 编译
-npx run asbuild:coin
 
-# 部署合约 
-node tests/deploy-coin.js
+## compile and deploy 
 
-# 查看账户余额
-node tests/view-coin-balance.js
+1. clone or download this repository
 
-# 充值
-node tests/call-coin-charge.js
+2. execute `npm install` to install dependencies
 
-# 转账
-node tests/call-coin-transfer.js
-```
+3. write your contract code at assembly/index.ts
+
+4. configure your tds server at cmd-config.json
+
+5. download latest cmd tool cmd-1.0-SNAPSHOT.jar at [release page](https://github.com/TrustedDataFramework/assembly-script-template/releases)
+
+6. execute command `java -jar cmd-*.jar deploy -c cmd-config.json`
+

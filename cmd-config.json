@@ -1,6 +1,7 @@
 {
   "version": "",
-  "entry-point": "",
+  "host": "",
+  "port": "",
   "source": "assembly/index.ts",
   "private-key": "",
   "asc-path": "node_modules/.bin/asc"
