@@ -20,7 +20,6 @@ public class AscWrapper {
         String cmd = ascPath + " " + source + " --optimize -b";
         Process p = Runtime.getRuntime().exec(cmd);
         InputStream in = p.getInputStream();
-
         Future<byte[]> errorFuture =
                 CompletableFuture.supplyAsync(() -> {
                     try{

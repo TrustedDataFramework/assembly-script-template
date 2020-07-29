@@ -46,6 +46,12 @@ public class Compile {
     public void run() {
         withDefault();
         AscWrapper wrapper = new AscWrapper(ascPath);
-        Files.write(Paths.get(output), wrapper.compile(source), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        Files.write(
+                Paths.get(output),
+                wrapper.compile(source),
+                StandardOpenOption.WRITE,
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING
+        );
     }
 }
