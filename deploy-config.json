@@ -1,10 +1,8 @@
 {
-    "version": 1634693120,
-    "type": 2,
-    "endpoint": "http://localhost:8080/transaction",
-    "binary": "build/optimized.wasm",
-    "from": "e54090596bcdfe5441e1e3d838cdbf5a8eed6b1fd71d105cc4f59646faadb6da",
-    "nonce": 1,
-    "gasPrice": 100,
-    "signature": "ff"
+    "version": "",
+    "host": "",
+    "port": "",
+    "source": "assembly/index.ts",
+    "private-key": "",
+    "asc-path": "node_modules/.bin/asc"
 }
