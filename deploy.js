@@ -1,5 +1,3 @@
-const fs = require('fs');
-const axios = require('axios');
 const child_process = require('child_process');
 const conf = require(process.env['CONFIG'] ? process.env['CONFIG'] : './deploy-config.json');
 const tool = require('@salaku/js-sdk')
