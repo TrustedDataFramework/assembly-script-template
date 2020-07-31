@@ -15,7 +15,7 @@ async function main(){
         createdAt: Math.floor((new Date()).valueOf() / 1000),
         nonce: conf['nonce'] ? conf['nonce'] : 0,
         from: tool.privateKey2PublicKey(sk),
-        payload: tool.buildPayload(method, Buffer.from(args, 'hex')),
+        payload: tool.buildPayload(method, Buffer.from(args, 'hex')).toString('hex'),
         to: address
     }
 
@@ -27,3 +27,6 @@ async function main(){
     const resp = await tool.sendTransaction(conf.host, conf.port || 7010, tx)
     console.log(resp)
 }
+
+main()
+.catch(console.error)
