@@ -35,7 +35,7 @@ const p = new Promise((resolve, reject) => {
         return tx
     return tool.getNonce(conf.host, conf.port ? conf.port : 7010, pk)
     .then(n => {
-        tx.nonce = n
+        tx.nonce = n + 1
         return tx
     })
 })
