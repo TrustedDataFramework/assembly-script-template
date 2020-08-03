@@ -52,3 +52,4 @@ export * from './result';
 export * from './event'
 export * from './rlp'
 export * from './db';
+export * from './transfer'
