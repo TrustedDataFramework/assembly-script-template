@@ -53,3 +53,5 @@ export * from './event'
 export * from './rlp'
 export * from './db';
 export * from './transfer'
+export * from './safemath'
+export * from './coin'
