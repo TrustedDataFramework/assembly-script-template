@@ -1,32 +1,41 @@
+/**
+ * 智能合约调用示例
+ */
+
 const tool = require('@salaku/js-sdk')
-const address = ''
-const method = ''
+const address = '****'
+
+// 调用 increment 方法
+const method = 'increment'
 const args = ''
-const conf = require(process.env['CONFIG'] ? process.env['CONFIG'] : './deploy-config.json');
+
+// 读取配置
+const conf = require(process.env['CONFIG'] ? path.join(process.cwd(), process.env['CONFIG']) : path.join(process.cwd(), './config.json'));
 const sk = conf['private-key']
+// 把私钥转成公钥
 const pk = tool.privateKey2PublicKey(sk)
 
-const args = tool.buildPayload(method, args)
+// 事务构造工具
+const builder = new tool.TransactionBuilder(conf.version, sk, conf['gas-price'] || 0)
+// rpc 工具
+const rpc = new tool.RPC(conf.host, conf.port)
 
+
+
+// 主函数
 async function main(){
-    const tx = {
-        version: conf.version,
-        type: 3,
-        createdAt: Math.floor((new Date()).valueOf() / 1000),
-        nonce: conf['nonce'] ? conf['nonce'] : 0,
-        from: tool.privateKey2PublicKey(sk),
-        payload: tool.buildPayload(method, Buffer.from(args, 'hex')).toString('hex'),
-        to: address
-    }
+    // 构造 payload
+    const payload = tool.buildPayload(method, args)
+    // 构造事务
+    const tx = builder.buildContractCall(address, tool.buildPayload(method, Buffer.from(args, 'hex')), 0)
 
     if(!tx.nonce)
         tx.nonce = (await tool.getNonce(conf.host, conf.port || 7010, pk)) + 1
 
-    tool.sign(tx, sk)
-
-    const resp = await tool.sendTransaction(conf.host, conf.port || 7010, tx)
-    console.log(resp)
+    builder.sign(tx)
+    return await rpc.sendTransaction(tx)
 }
 
 main()
+.then(console.log)
 .catch(console.error)
