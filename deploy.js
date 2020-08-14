@@ -1,11 +1,22 @@
 /**
  * 智能合约部署示例
  */
+
+function getConfigPath() {
+    if (!process.env['CONFIG'])
+        return path.join(process.cwd(), 'config.json')
+    const c = process.env['CONFIG']
+    if (path.isAbsolute(c))
+        return c
+    return path.join(process.cwd(), c)
+}
+
+
 const tool = require('@salaku/js-sdk')
 const path = require('path')
 
 // 读取配置
-const conf = require(process.env['CONFIG'] ? path.join(process.cwd(), process.env['CONFIG']) : path.join(process.cwd(), './config.json'));
+const conf = require(getConfigPath());
 const sk = conf['private-key']
 const pk = tool.privateKey2PublicKey(sk)
 
@@ -14,13 +25,13 @@ const builder = new tool.TransactionBuilder(conf.version, sk, conf['gas-price'] 
 // rpc 工具
 const rpc = new tool.RPC(conf.host, conf.port)
 
-async function main(){
+async function main() {
     // 编译合约得到二进制内容
     const o = await tool.compileContract(conf['asc-path'], conf.source)
     // 构造合约部署的事务
     const tx = builder.buildDeploy(o, 0)
 
-    if(!tx.nonce){
+    if (!tx.nonce) {
         tx.nonce = (await rpc.getNonce(pk)) + 1
     }
 
