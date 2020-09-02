@@ -1,3 +1,4 @@
+// depricated
 enum Type{
     ADD, SUB,MUL, DIV,  COMPARE
 }
@@ -11,7 +12,6 @@ declare function _decimal(type: u32,
                           arg1: u64, arg2: u64,
                           put: u64
 ): u64;
-
 
 // decimal will not be stored in memory
 // please store decimal string and parse it next time
