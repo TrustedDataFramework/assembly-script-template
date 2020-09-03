@@ -1,4 +1,5 @@
 import { RLPList, RLP } from "./rlp";
+import {Util} from "./util";
 
 // @ts-ignore
 @external("env", "_context")
@@ -77,6 +78,10 @@ export class Address {
         const ret = new ArrayBuffer(u32(len));
         _context(ContextType.CONTRACT_CODE, ptr, this.buf.byteLength, changetype<usize>(ret), 1);
         return ret;
+    }
+
+    equals(y: Address): bool{
+        return Util.compareBytes(this.buf, y.buf) == 0;
     }
 }
 
@@ -228,6 +233,10 @@ export class Contract {
  * context.load() is only available when deploy/call contract
  */
 export class Context {
+    static self(): Address{
+        return new Address(Context.getBytes(ContextType.CONTRACT_ADDRESS));
+    }
+
     emit(name: string, data: Parameters): void {
         const str = String.UTF8.encode(name);
         const buf = data.li.encoded;
