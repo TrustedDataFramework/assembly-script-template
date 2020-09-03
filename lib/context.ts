@@ -6,9 +6,10 @@ import { RLPList, RLP } from "./rlp";
 declare function _context(type: u64, arg0: u64, arg1: u64, arg2: u64, arg3: u64): u64;
 
 // @ts-ignore
-@external("env", "_call")
+@external("env", "_reflect")
 // type, address, method, parameters, dst
-declare function _call(type: u64, ptr0: u64, ptr0Len: u64, ptr1: u64, ptr1Len: u64, ptr2: u64, ptr2Len: u64, amount: u64, dst: u64): u64;
+// type, binary, parameters, 0, 0, amount , dst
+declare function _reflect(type: u64, ptr0: u64, ptr0Len: u64, ptr1: u64, ptr1Len: u64, ptr2: u64, ptr2Len: u64, amount: u64, dst: u64): u64;
 
 // @ts-ignore
 @external("env", "_transfer")
@@ -28,9 +29,11 @@ declare function _event(arg0: u64,
 ): u64;
 
 
-enum CallType {
+enum ReflectType {
     CALL_WITHOUT_PUT, // call without put into memory
-    CALL_WITH_PUT // call and put into memory
+    CALL_WITH_PUT, // call and put into memory
+    CREATE_WITHOUT_PUT,
+    CREATE_WITH_PUT
 }
 
 export class Address {
@@ -51,10 +54,10 @@ export class Address {
         const ptr1len = str.byteLength;
         const ptr2 = changetype<usize>(parameters);
         const ptr2len = parameters.byteLength;
-        const len = _call(CallType.CALL_WITHOUT_PUT, ptr0, ptr0len, ptr1, ptr1len, ptr2, ptr2len, amount, 0);
+        const len = _reflect(ReflectType.CALL_WITHOUT_PUT, ptr0, ptr0len, ptr1, ptr1len, ptr2, ptr2len, amount, 0);
         const ret = new ArrayBuffer(len);
-        _call(CallType.CALL_WITH_PUT, ptr0, ptr0len, ptr1, ptr1len, ptr2, ptr2len, amount, changetype<usize>(ret));
-        return new Parameters(RLPList.fromEncoded(ret));
+        _reflect(ReflectType.CALL_WITH_PUT, ptr0, ptr0len, ptr1, ptr1len, ptr2, ptr2len, amount, changetype<usize>(ret));
+        return len == 0 ? Parameters.EMPTY : new Parameters(RLPList.fromEncoded(ret));
     }
 
     balance(): u64 {
@@ -66,6 +69,15 @@ export class Address {
     nonce(): u64 {
         const ptr = changetype<usize>(this.buf);
         return _context(ContextType.ACCOUNT_NONCE, ptr, this.buf.byteLength, 0, 0);
+    }
+
+    // get contract code
+    code(): ArrayBuffer {
+        const ptr = changetype<usize>(this.buf);
+        const len = _context(ContextType.CONTRACT_CODE, ptr, this.buf.byteLength, 0, 0);
+        const buf = new ArrayBuffer(len);
+        _context(ContextType.CONTRACT_CODE, ptr, this.buf.byteLength, changetype<usize>(buf), 1);
+        return buf;
     }
 }
 
@@ -92,7 +104,8 @@ enum ContextType {
     ACCOUNT_NONCE,
     ACCOUNT_BALANCE,
     MSG_SENDER,
-    MSG_AMOUNT
+    MSG_AMOUNT,
+    CONTRACT_CODE
 }
 
 export enum TransactionType {
@@ -117,33 +130,35 @@ export enum TransactionType {
 
 export class ParametersBuilder {
     private readonly elements: Array<ArrayBuffer>;
-    constructor(){
+    constructor() {
         this.elements = new Array<ArrayBuffer>();
     }
 
-    pushBytes(data: ArrayBuffer): void{
+    pushBytes(data: ArrayBuffer): void {
         this.elements.push(RLP.encodeBytes(data));
     }
 
-    pushAddress(addr: Address): void{
+    pushAddress(addr: Address): void {
         this.elements.push(RLP.encodeBytes(addr.buf));
     }
 
-    pushU64(data: u64): void{
+    pushU64(data: u64): void {
         this.elements.push(RLP.encodeU64(data));
     }
 
-    pushString(data: string): void{
+    pushString(data: string): void {
         this.elements.push(RLP.encodeString(data));
     }
 
-    build(): Parameters{
+    build(): Parameters {
         const encoded = RLP.encodeElements(this.elements);
         return new Parameters(RLPList.fromEncoded(encoded));
     }
 }
 
 export class Parameters {
+    static EMPTY: Parameters = new Parameters(RLPList.EMPTY);
+
     constructor(
         readonly li: RLPList
     ) { }
@@ -160,12 +175,12 @@ export class Parameters {
         return this.li.getItem(idx).string();
     }
 
-    bytes(idx: u32): ArrayBuffer{
+    bytes(idx: u32): ArrayBuffer {
         return this.li.getItem(idx).bytes();
     }
-    
+
     // return parameters
-    writeResult(): void{
+    writeResult(): void {
         _result(changetype<usize>(this.li.encoded), this.li.encoded.byteLength);
     }
 }
@@ -181,7 +196,7 @@ export class Header {
 export class Msg {
     constructor(
         readonly sender: Address,
-        readonly value: u64,
+        readonly amount: u64,
     ) { }
 }
 
@@ -214,7 +229,7 @@ export class Contract {
  * context.load() is only available when deploy/call contract
  */
 export class Context {
-    emit(name: string, data: Parameters): void{
+    emit(name: string, data: Parameters): void {
         const str = String.UTF8.encode(name);
         const buf = data.li.encoded;
         _event(0, changetype<usize>(str), str.byteLength, changetype<usize>(buf), buf.byteLength);
@@ -239,7 +254,7 @@ export class Context {
         );
     }
 
-    static msg(): Msg{
+    static msg(): Msg {
         return new Msg(
             new Address(Context.getBytes(ContextType.MSG_SENDER)),
             Context.getU64(ContextType.MSG_AMOUNT)
@@ -272,5 +287,19 @@ export class Context {
         const buf = Context.getBytes(ContextType.ARGUMENTS_PARAMETERS);
         const li = RLPList.fromEncoded(buf);
         return new Parameters(li);
+    }
+
+    static create(code: ArrayBuffer, parameters: Parameters, amount: u64): Address {
+        const ptr0 = changetype<usize>(code);
+        const ptr0len = code.byteLength;
+        const buf = RLP.encodeElements(parameters.li.elements);
+
+        const ptr1 = changetype<usize>(buf);
+        const ptr1len = buf.byteLength;
+
+        const len = _reflect(ReflectType.CREATE_WITHOUT_PUT, ptr0, ptr0len, ptr1, ptr1len, 0, 0, amount, 0);
+        const ret = new ArrayBuffer(len);
+        _reflect(ReflectType.CREATE_WITH_PUT, ptr0, ptr0len, ptr1, ptr1len, 0, 0, amount, changetype<usize>(ret));
+        return new Address(ret);
     }
 }

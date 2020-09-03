@@ -118,6 +118,8 @@ export class RLPItem {
 }
 
 export class RLPList {
+    static EMPTY: RLPList = new RLPList([], new ArrayBuffer(0));
+    
     private constructor(readonly elements: Array<ArrayBuffer>, readonly encoded: ArrayBuffer) {
     }
 
