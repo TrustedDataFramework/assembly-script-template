@@ -19,7 +19,7 @@ export class Util {
 
     // decode 
     static decodeHex(hex: string): ArrayBuffer {
-        const str = this.string2bytes(hex);
+        const str = this.str2bin(hex);
         const len = _util(Type.DECODE_HEX, changetype<usize>(str), str.byteLength, 0, 0, 0, 0);
         const buf = new ArrayBuffer(u32(len));
         _util(Type.DECODE_HEX, changetype<usize>(str), str.byteLength, 0, 0, changetype<usize>(buf), 1);
@@ -50,7 +50,7 @@ export class Util {
         return 0;
     }
 
-    static string2bytes(str: string): ArrayBuffer {
+    static str2bin(str: string): ArrayBuffer {
         return String.UTF8.encode(str);
     }
 }

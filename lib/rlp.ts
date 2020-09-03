@@ -1,5 +1,11 @@
 const OFFSET_SHORT_LIST: u8 = 0xc0;
 
+function emptyList(): ArrayBuffer{
+    const ret = new Uint8Array(1);
+    ret[0] = OFFSET_SHORT_LIST;
+    return ret.buffer;
+}
+
 // @ts-ignore
 @external("env", "_rlp")
 // type, ptr0 ptr0Len dst, put ? 
@@ -118,8 +124,8 @@ export class RLPItem {
 }
 
 export class RLPList {
-    static EMPTY: RLPList = new RLPList([], new ArrayBuffer(0));
-    
+    static EMPTY: RLPList = new RLPList([], emptyList());
+
     private constructor(readonly elements: Array<ArrayBuffer>, readonly encoded: ArrayBuffer) {
     }
 
@@ -168,6 +174,8 @@ function encodeBytes(bytes: ArrayBuffer): ArrayBuffer {
 
 
 function encodeElements(elements: Array<ArrayBuffer>): ArrayBuffer {
+    if(elements.length == 0)
+        return emptyList();
     for(let i = 0; i < elements.length; i++){
         const buf = elements[i];
         _rlp(Type.RLP_LIST_PUSH, changetype<usize>(buf), buf.byteLength, 0, 0);

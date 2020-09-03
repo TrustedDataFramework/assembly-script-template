@@ -10,7 +10,6 @@ export function log(a: string): void {
 }
 
 export * from './context';
-export * from './event'
 export * from './rlp'
 export * from './db';
 export * from './safemath'

@@ -32,13 +32,11 @@ declare function _event(arg0: u64,
 enum ReflectType {
     CALL_WITHOUT_PUT, // call without put into memory
     CALL_WITH_PUT, // call and put into memory
-    CREATE_WITHOUT_PUT,
-    CREATE_WITH_PUT
+    CREATE
 }
 
 export class Address {
     constructor(readonly buf: ArrayBuffer) {
-
     }
 
     transfer(amount: u64): void {
@@ -46,16 +44,17 @@ export class Address {
         _transfer(0, ptr, this.buf.byteLength, amount);
     }
 
-    call(method: string, parameters: ArrayBuffer, amount: u64): Parameters {
+    call(method: string, parameters: Parameters, amount: u64): Parameters {
+        const buf = RLP.encodeElements(parameters.li.elements);
         const ptr0 = changetype<usize>(this.buf);
         const ptr0len = this.buf.byteLength;
         const str = String.UTF8.encode(method);
         const ptr1 = changetype<usize>(str);
         const ptr1len = str.byteLength;
-        const ptr2 = changetype<usize>(parameters);
-        const ptr2len = parameters.byteLength;
+        const ptr2 = changetype<usize>(buf);
+        const ptr2len = buf.byteLength;
         const len = _reflect(ReflectType.CALL_WITHOUT_PUT, ptr0, ptr0len, ptr1, ptr1len, ptr2, ptr2len, amount, 0);
-        const ret = new ArrayBuffer(len);
+        const ret = new ArrayBuffer(u32(len));
         _reflect(ReflectType.CALL_WITH_PUT, ptr0, ptr0len, ptr1, ptr1len, ptr2, ptr2len, amount, changetype<usize>(ret));
         return len == 0 ? Parameters.EMPTY : new Parameters(RLPList.fromEncoded(ret));
     }
@@ -75,9 +74,9 @@ export class Address {
     code(): ArrayBuffer {
         const ptr = changetype<usize>(this.buf);
         const len = _context(ContextType.CONTRACT_CODE, ptr, this.buf.byteLength, 0, 0);
-        const buf = new ArrayBuffer(len);
-        _context(ContextType.CONTRACT_CODE, ptr, this.buf.byteLength, changetype<usize>(buf), 1);
-        return buf;
+        const ret = new ArrayBuffer(u32(len));
+        _context(ContextType.CONTRACT_CODE, ptr, this.buf.byteLength, changetype<usize>(ret), 1);
+        return ret;
     }
 }
 
@@ -293,13 +292,11 @@ export class Context {
         const ptr0 = changetype<usize>(code);
         const ptr0len = code.byteLength;
         const buf = RLP.encodeElements(parameters.li.elements);
-
         const ptr1 = changetype<usize>(buf);
         const ptr1len = buf.byteLength;
 
-        const len = _reflect(ReflectType.CREATE_WITHOUT_PUT, ptr0, ptr0len, ptr1, ptr1len, 0, 0, amount, 0);
-        const ret = new ArrayBuffer(len);
-        _reflect(ReflectType.CREATE_WITH_PUT, ptr0, ptr0len, ptr1, ptr1len, 0, 0, amount, changetype<usize>(ret));
+        const ret = new ArrayBuffer(20);
+        _reflect(ReflectType.CREATE, ptr0, ptr0len, ptr1, ptr1len, 0, 0, amount, changetype<usize>(ret));
         return new Address(ret);
     }
 }
