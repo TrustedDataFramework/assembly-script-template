@@ -29,7 +29,10 @@ async function main() {
     // 编译合约得到二进制内容
     const o = await tool.compileContract(conf['asc-path'], conf.source)
     // 构造合约部署的事务
-    const tx = builder.buildDeploy(o, 0)
+    const tx = builder.buildDeploy(o, {
+        tokenName: 'doge',
+        
+    })
 
     if (!tx.nonce) {
         tx.nonce = (await rpc.getNonce(pk)) + 1

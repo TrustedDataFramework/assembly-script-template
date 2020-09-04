@@ -1,3 +1,5 @@
+import { U256 } from '.'
+import { Util } from './util';
 const OFFSET_SHORT_LIST: u8 = 0xc0;
 
 function emptyList(): ArrayBuffer{
@@ -15,7 +17,6 @@ enum Type{
     ENCODE_U64,
     ENCODE_BYTES,
     DECODE_BYTES,
-    BYTES_TO_U64,
     RLP_LIST_SET, // add rlp list to global env
     RLP_LIST_CLEAR,
     RLP_LIST_LEN,
@@ -38,8 +39,16 @@ export class RLP {
         return buf;
     }
 
+    static encodeU256(u: U256): ArrayBuffer{
+        return encodeBytes(u.buf);
+    }
+
     static decodeU64(u: ArrayBuffer): u64{
         return RLPItem.fromEncoded(u).u64();
+    }
+
+    static decodeU256(u: ArrayBuffer): U256{
+        return RLPItem.fromEncoded(u).u256();
     }
 
     static decodeString(encoded: ArrayBuffer): string{
@@ -107,7 +116,11 @@ export class RLPItem {
     }
 
     u64(): u64 {
-        return _rlp(Type.BYTES_TO_U64, changetype<usize>(this.data), this.data.byteLength, 0, 0);
+        return Util.bytesToU64(this.data);
+    }
+
+    u256(): U256{
+       return new U256(this.bytes());
     }
 
     bytes(): ArrayBuffer {

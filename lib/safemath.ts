@@ -16,7 +16,7 @@ export class SafeMath {
         }
 
         const c = a * b;
-        assert(c / a == b, "SafeMath: multiplication overflow");
+        assert(c / a == b, "SafeMath: multiplication overflow ");
         return c;
     }
 

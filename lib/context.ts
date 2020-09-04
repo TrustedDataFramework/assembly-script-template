@@ -1,5 +1,6 @@
 import { RLPList, RLP } from "./rlp";
-import {Util} from "./util";
+import { Util, U256 } from "./util";
+import {log} from "./index";
 
 // @ts-ignore
 @external("env", "_context")
@@ -10,12 +11,12 @@ declare function _context(type: u64, arg0: u64, arg1: u64, arg2: u64, arg3: u64)
 @external("env", "_reflect")
 // type, address, method, parameters, dst
 // type, binary, parameters, 0, 0, amount , dst
-declare function _reflect(type: u64, ptr0: u64, ptr0Len: u64, ptr1: u64, ptr1Len: u64, ptr2: u64, ptr2Len: u64, amount: u64, dst: u64): u64;
+declare function _reflect(type: u64, ptr0: u64, ptr0Len: u64, ptr1: u64, ptr1Len: u64, ptr2: u64, ptr2Len: u64, amount_ptr: u64, amount_len: u64, dst: u64): u64;
 
 // @ts-ignore
 @external("env", "_transfer")
 // type, address, amount
-declare function _transfer(type: u64, ptr0: u64, ptr1Len: u64, amount: u64): void;
+declare function _transfer(type: u64, ptr0: u64, ptr1Len: u64, amount_ptr: u64, amount_len: u64): void;
 
 // @ts-ignore
 @external("env", "_result")
@@ -29,6 +30,16 @@ declare function _event(arg0: u64,
     arg3: u64, arg4: u64
 ): u64;
 
+function getBytes(type: u32): ArrayBuffer {
+    const len = u32(_context(type, 0, 0, 0, 0));
+    const buf = new ArrayBuffer(u32(len));
+    _context(type, changetype<usize>(buf), 1, 0, 0);
+    return buf;
+}
+
+function getU64(type: u32): u64 {
+    return _context(type, 0, 0, 0, 0);
+}
 
 enum ReflectType {
     CALL_WITHOUT_PUT, // call without put into memory
@@ -40,12 +51,12 @@ export class Address {
     constructor(readonly buf: ArrayBuffer) {
     }
 
-    transfer(amount: u64): void {
+    transfer(amount: U256): void {
         const ptr = changetype<usize>(this.buf);
-        _transfer(0, ptr, this.buf.byteLength, amount);
+        _transfer(0, ptr, this.buf.byteLength, changetype<usize>(amount.buf), amount.buf.byteLength);
     }
 
-    call(method: string, parameters: Parameters, amount: u64): Parameters {
+    call(method: string, parameters: Parameters, amount: U256): Parameters {
         const buf = RLP.encodeElements(parameters.li.elements);
         const ptr0 = changetype<usize>(this.buf);
         const ptr0len = this.buf.byteLength;
@@ -54,16 +65,17 @@ export class Address {
         const ptr1len = str.byteLength;
         const ptr2 = changetype<usize>(buf);
         const ptr2len = buf.byteLength;
-        const len = _reflect(ReflectType.CALL_WITHOUT_PUT, ptr0, ptr0len, ptr1, ptr1len, ptr2, ptr2len, amount, 0);
+        const len = _reflect(ReflectType.CALL_WITHOUT_PUT, ptr0, ptr0len, ptr1, ptr1len, ptr2, ptr2len, changetype<usize>(amount.buf), amount.buf.byteLength, 0);
         const ret = new ArrayBuffer(u32(len));
-        _reflect(ReflectType.CALL_WITH_PUT, ptr0, ptr0len, ptr1, ptr1len, ptr2, ptr2len, amount, changetype<usize>(ret));
+        _reflect(ReflectType.CALL_WITH_PUT, ptr0, ptr0len, ptr1, ptr1len, ptr2, ptr2len, changetype<usize>(amount.buf), amount.buf.byteLength, changetype<usize>(ret));
         return len == 0 ? Parameters.EMPTY : new Parameters(RLPList.fromEncoded(ret));
     }
 
-    balance(): u64 {
-        const ptr0 = changetype<usize>(this.buf);
-        const ptr0len = this.buf.byteLength;
-        return _context(ContextType.ACCOUNT_BALANCE, ptr0, ptr0len, 0, 0);
+    balance(): U256 {
+        const len = _context(ContextType.ACCOUNT_BALANCE, changetype<usize>(this.buf), this.buf.byteLength, 0, 0);
+        const ret = new ArrayBuffer(u32(len));
+        _context(ContextType.ACCOUNT_BALANCE, changetype<usize>(this.buf), this.buf.byteLength, changetype<usize>(ret), 1);
+        return new U256(ret);
     }
 
     nonce(): u64 {
@@ -80,8 +92,12 @@ export class Address {
         return ret;
     }
 
-    equals(y: Address): bool{
+    equals(y: Address): bool {
         return Util.compareBytes(this.buf, y.buf) == 0;
+    }
+
+    toString(): string{
+        return Util.encodeHex(this.buf);
     }
 }
 
@@ -150,6 +166,10 @@ export class ParametersBuilder {
         this.elements.push(RLP.encodeU64(data));
     }
 
+    pushU256(data: U256): void {
+        this.elements.push(RLP.encodeU256(data));
+    }
+
     pushString(data: string): void {
         this.elements.push(RLP.encodeString(data));
     }
@@ -173,6 +193,10 @@ export class Parameters {
 
     u64(idx: u32): u64 {
         return this.li.getItem(idx).u64();
+    }
+
+    u256(idx: u32): U256 {
+        return this.li.getItem(idx).u256();
     }
 
     string(idx: u32): string {
@@ -200,7 +224,7 @@ export class Header {
 export class Msg {
     constructor(
         readonly sender: Address,
-        readonly amount: u64,
+        readonly amount: U256,
     ) { }
 }
 
@@ -210,8 +234,8 @@ export class Transaction {
         readonly createdAt: u64,
         readonly nonce: u64,
         readonly origin: Address,
-        readonly gasPrice: u64,
-        readonly amount: u64,
+        readonly gasPrice: U256,
+        readonly amount: U256,
         readonly to: Address,
         readonly signature: ArrayBuffer,
         readonly hash: ArrayBuffer
@@ -233,8 +257,8 @@ export class Contract {
  * context.load() is only available when deploy/call contract
  */
 export class Context {
-    static self(): Address{
-        return new Address(Context.getBytes(ContextType.CONTRACT_ADDRESS));
+    static self(): Address {
+        return new Address(getBytes(ContextType.CONTRACT_ADDRESS));
     }
 
     emit(name: string, data: Parameters): void {
@@ -243,61 +267,52 @@ export class Context {
         _event(0, changetype<usize>(str), str.byteLength, changetype<usize>(buf), buf.byteLength);
     }
 
-    private static getBytes(type: u32): ArrayBuffer {
-        const len = u32(_context(type, 0, 0, 0, 0));
-        const buf = new ArrayBuffer(u32(len));
-        _context(type, changetype<usize>(buf), 1, 0, 0);
-        return buf;
-    }
 
-    private static getU64(type: u32): u64 {
-        return _context(type, 0, 0, 0, 0);
-    }
 
     static header(): Header {
         return new Header(
-            Context.getBytes(ContextType.HEADER_PARENT_HASH),
-            Context.getU64(ContextType.HEADER_CREATED_AT),
-            Context.getU64(ContextType.HEADER_HEIGHT)
+            getBytes(ContextType.HEADER_PARENT_HASH),
+            getU64(ContextType.HEADER_CREATED_AT),
+            getU64(ContextType.HEADER_HEIGHT)
         );
     }
 
     static msg(): Msg {
         return new Msg(
-            new Address(Context.getBytes(ContextType.MSG_SENDER)),
-            Context.getU64(ContextType.MSG_AMOUNT)
+            new Address(getBytes(ContextType.MSG_SENDER)),
+            new U256(getBytes(ContextType.MSG_AMOUNT))
         );
     }
 
     static transaction(): Transaction {
         return new Transaction(
-            u8(Context.getU64(ContextType.TX_TYPE)),
-            Context.getU64(ContextType.TX_CREATED_AT),
-            Context.getU64(ContextType.TX_NONCE),
-            new Address(Context.getBytes(ContextType.TX_ORIGIN)),
-            Context.getU64(ContextType.TX_GAS_PRICE),
-            Context.getU64(ContextType.TX_AMOUNT),
-            new Address(Context.getBytes(ContextType.TX_TO)),
-            Context.getBytes(ContextType.TX_SIGNATURE),
-            Context.getBytes(ContextType.TX_HASH),
+            u8(getU64(ContextType.TX_TYPE)),
+            getU64(ContextType.TX_CREATED_AT),
+            getU64(ContextType.TX_NONCE),
+            new Address(getBytes(ContextType.TX_ORIGIN)),
+            new U256(getBytes(ContextType.TX_GAS_PRICE)),
+            new U256(getBytes(ContextType.TX_AMOUNT)),
+            new Address(getBytes(ContextType.TX_TO)),
+            getBytes(ContextType.TX_SIGNATURE),
+            getBytes(ContextType.TX_HASH),
         );
     }
 
     static contract(): Contract {
         return new Contract(
-            new Address(Context.getBytes(ContextType.CONTRACT_ADDRESS)),
-            Context.getU64(ContextType.CONTRACT_NONCE),
-            new Address(Context.getBytes(ContextType.CONTRACT_CREATED_BY))
+            new Address(getBytes(ContextType.CONTRACT_ADDRESS)),
+            getU64(ContextType.CONTRACT_NONCE),
+            new Address(getBytes(ContextType.CONTRACT_CREATED_BY))
         );
     }
 
     static parameters(): Parameters {
-        const buf = Context.getBytes(ContextType.ARGUMENTS_PARAMETERS);
+        const buf = getBytes(ContextType.ARGUMENTS_PARAMETERS);
         const li = RLPList.fromEncoded(buf);
         return new Parameters(li);
     }
 
-    static create(code: ArrayBuffer, parameters: Parameters, amount: u64): Address {
+    static create(code: ArrayBuffer, parameters: Parameters, amount: U256): Address {
         const ptr0 = changetype<usize>(code);
         const ptr0len = code.byteLength;
         const buf = RLP.encodeElements(parameters.li.elements);
@@ -305,7 +320,7 @@ export class Context {
         const ptr1len = buf.byteLength;
 
         const ret = new ArrayBuffer(20);
-        _reflect(ReflectType.CREATE, ptr0, ptr0len, ptr1, ptr1len, 0, 0, amount, changetype<usize>(ret));
+        _reflect(ReflectType.CREATE, ptr0, ptr0len, ptr1, ptr1len, 0, 0, changetype<usize>(amount.buf), amount.buf.byteLength, changetype<usize>(ret));
         return new Address(ret);
     }
 }
