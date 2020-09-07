@@ -1,4 +1,3 @@
-import {log} from '.'
 // @ts-ignore
 @external("env", "_util")
 // type, address, method, parameters, dst, put?
@@ -29,6 +28,61 @@ enum U256Type {
 }
 
 export class U256 {
+    @operator("+")
+    static __op_add(left: U256, right :U256): U256 {
+        return left.safeAdd(right);
+    }
+
+    @operator("-")
+    static __op_sub(left: U256, right :U256): U256 {
+        return left.safeSub(right);
+    }
+
+    @operator("*")
+    static __op_mul(left: U256, right :U256): U256 {
+        return left.safeMul(right);
+    }
+
+    @operator("/")
+    static __op_div(left: U256, right :U256): U256 {
+        return left.safeDiv(right);
+    }
+
+    @operator("%")
+    static __op_mod(left: U256, right :U256): U256 {
+        return left.safeMod(right);
+    }
+
+    @operator(">")
+    static __op_gt(left: U256, right :U256): bool {
+        return left.compareTo(right) > 0;
+    }
+
+    @operator(">=")
+    static __op_gte(left: U256, right :U256): bool {
+        return left.compareTo(right) >= 0;
+    }
+
+    @operator("<")
+    static __op_lt(left: U256, right :U256): bool {
+        return left.compareTo(right) < 0;
+    }
+
+    @operator("<=")
+    static __op_lte(left: U256, right :U256): bool {
+        return left.compareTo(right) <= 0;
+    }
+
+    @operator("==")
+    static __op_eq(left: U256, right :U256): bool {
+        return left.compareTo(right) == 0;
+    }
+
+    @operator("!=")
+    static __op_ne(left: U256, right :U256): bool {
+        return left.compareTo(right) != 0;
+    }
+
     static ZERO: U256 = new U256(new ArrayBuffer(0));
     static ONE: U256 = U256.fromU64(1);
 
@@ -38,6 +92,7 @@ export class U256 {
     }
 
     constructor(readonly buf: ArrayBuffer) {
+        assert(buf.byteLength <= 32, 'invalid u256: overflow')
     }
 
     private arithmetic(t: U256Type, u: U256): U256 {
@@ -62,7 +117,7 @@ export class U256 {
     }
 
     safeSub(u: U256): U256 {
-        assert(u.compareTo(this) <= 0, "SafeMath: subtraction overflow");
+        assert(u.compareTo(this) <= 0, "SafeMath: subtraction overflow x = " + this.toString() + " y = " + u.toString());
         return this.sub(u);
     }
 
@@ -71,15 +126,11 @@ export class U256 {
     }
 
     safeMul(u: U256): U256 {
-        if (this.equals(U256.ZERO)) {
+        if (this == u) {
             return U256.ZERO;
         }
 
         const c = this.mul(u);
-        if(!c.div(this).equals(u)){
-            log(Util.encodeHex(this.buf));
-            log(c.toString() + ' mul ' + u.toString() + ' = ' + c.toString())
-        }
         assert(c.div(this).compareTo(u) == 0, "SafeMath: multiplication overflow ");
         return c;
     }
@@ -106,26 +157,6 @@ export class U256 {
         return Util.compareBytes(this.buf, u.buf);
     }
 
-    gt(u: U256): bool {
-        return this.compareTo(u) > 0;
-    }
-
-    gte(u: U256): bool {
-        return this.compareTo(u) >= 0;
-    }
-
-    lt(u: U256): bool {
-        return this.compareTo(u) < 0;
-    }
-
-    lte(u: U256): bool {
-        return this.compareTo(u) <= 0;
-    }
-
-    equals(u: U256): bool{
-        return this.compareTo(u) == 0;
-    }
-
     toString(radix: u32 = 10): string {
         const len = _u256(U256Type.TOSTRING, changetype<usize>(this.buf), this.buf.byteLength, radix, 0, 0, 0);
         const ret = new ArrayBuffer(u32(len));
@@ -139,10 +170,6 @@ export class U256 {
         const ret = new ArrayBuffer(u32(len));
         _u256(U256Type.PARSE, changetype<usize>(strbuf), strbuf.byteLength, radix, 0, changetype<usize>(ret), 1);
         return new U256(ret);
-    }
-
-    isPositive(): bool {
-        return this.compareTo(U256.ZERO) > 0;
     }
 }
 

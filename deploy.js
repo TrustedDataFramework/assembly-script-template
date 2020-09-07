@@ -1,48 +1,43 @@
 /**
  * 智能合约部署示例
  */
-
-function getConfigPath() {
-    if (!process.env['CONFIG'])
-        return path.join(process.cwd(), 'config.json')
-    const c = process.env['CONFIG']
-    if (path.isAbsolute(c))
-        return c
-    return path.join(process.cwd(), c)
-}
-
-
 const tool = require('@salaku/js-sdk')
-const path = require('path')
 
 // 读取配置
-const conf = require(getConfigPath());
-const sk = conf['private-key']
+const sk = 'b01bb4ceb384ceee3b1eaf2ed78deba989ed92b25c75f28de58fa8bba191d7bc'
 const pk = tool.privateKey2PublicKey(sk)
+const addr = tool.publicKey2Address(pk)
+
+const contract = new tool.Contract('', require('./local/coin.abi.json'))
 
 // 事务构造工具
-const builder = new tool.TransactionBuilder(conf.version, sk, conf['gas-price'] || 0)
+const builder = new tool.TransactionBuilder(tool.constants.POA_VERSION, sk, 0, 200000)
+
 // rpc 工具
-const rpc = new tool.RPC(conf.host, conf.port)
+const rpc = new tool.RPC('localhost', 7010)
+const ascPath = 'node_modules/.bin/asc';
+
+// 两个代币的地址
 
 async function main() {
     // 编译合约得到二进制内容
-    const o = await tool.compileContract(conf['asc-path'], conf.source)
-    // 构造合约部署的事务
-    const tx = builder.buildDeploy(o, {
+    contract.binary = await tool.compileContract(ascPath, 'assembly/index.ts', { debug: true })
+    builder.nonce = parseInt(await rpc.getNonce(addr)) + 1
+    const tx = builder.buildDeploy(contract, {
         tokenName: 'doge',
-        
+        symbol: 'DOGE',
+        totalSupply: '90000000000000000',
+        decimals: 8,
+        owner: addr
     })
-
-    if (!tx.nonce) {
-        tx.nonce = (await rpc.getNonce(pk)) + 1
-    }
-
-    tool.sign(tx, sk)
-    console.log(`contract address = ${tool.getContractAddress(pk, tx.nonce)}`)
-    const resp = await tool.sendTransaction(conf.host, conf.port, tx)
-    console.log(resp)
+    return rpc.sendAndObserve(tx)
 }
 
-main().catch(console.error)
+main()
+    .then(() => rpc.close())
+    .catch(e => {
+        console.error(e);
+        rpc.close();
+    })
 
+// test()

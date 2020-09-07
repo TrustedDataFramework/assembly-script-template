@@ -1,5 +1,5 @@
 
-import {Util} from './util'
+import { Util, RLP } from '.'
 
 enum Type {
     SET, GET, REMOVE, HAS, NEXT, CURRENT_KEY, CURRENT_VALUE, HAS_NEXT, RESET
@@ -14,43 +14,58 @@ export class Entry {
     }
 }
 
-
-export class PrefixedDB {
-    constructor(readonly prefix: ArrayBuffer, readonly wrapped: PrefixedDB | null = null) {
+export class Store<K, V>{
+    static from<U, R>(str: string): Store<U, R>{
+        return new Store(Util.str2bin(str));
+    }
+    constructor(readonly prefix: ArrayBuffer) {
     }
 
-    set(key: ArrayBuffer, value: ArrayBuffer): void {
-        if (this.wrapped == null) {
-            DB.set(Util.concatBytes(this.prefix, key), value);
-            return;
-        }
-        this.wrapped.set(Util.concatBytes(this.prefix, key), value);
+    private _key(key: K): ArrayBuffer{
+        return Util.concatBytes(this.prefix, RLP.encode<K>(key));
     }
 
-    remove(key: ArrayBuffer): void {
-        if (this.wrapped == null) {
-            DB.remove(Util.concatBytes(this.prefix, key));
-            return;
-        }
-        this.wrapped.remove(Util.concatBytes(this.prefix, key));
+    set(key: K, value: V): void {
+        DB.set(this._key(key), RLP.encode<V>(value));
     }
 
-    has(key: ArrayBuffer): bool {
-        if (this.wrapped == null) {
-            return DB.has(Util.concatBytes(this.prefix, key));
-        }
-        return this.wrapped.has(Util.concatBytes(this.prefix, key));
+    remove(key: K): void {
+        DB.remove(this._key(key));
     }
 
-    get(key: ArrayBuffer): ArrayBuffer {
-        if (this.wrapped == null) {
-            return DB.get(Util.concatBytes(this.prefix, key));
-        }
-        return this.wrapped.get(Util.concatBytes(this.prefix, key));
+    has(key: K): bool {
+        return DB.has(this._key(key));
+    }
+
+    getOrDefault(key: K, def: V): V {
+        return this.has(key) ? this.get(key) : def;
+    }
+
+    get(key: K): V {
+        return RLP.decode<V>(DB.get(this._key(key)));
+    }
+}
+
+export class Globals{
+    static set<V>(str: string, value: V): void {
+        DB.set(Util.str2bin(str), RLP.encode<V>(value));
+    }
+
+    static get<V>(str: string): V {
+        return RLP.decode<V>(DB.get(Util.str2bin(str)));
+    }
+
+    static getOrDefault<V>(str: string, value: V): V {
+        return DB.has(Util.str2bin(str)) ? RLP.decode<V>(DB.get(Util.str2bin(str))) : value;
+    }
+
+    static has(str: string): bool {
+        return DB.has(Util.str2bin(str));
     }
 }
 
 export class DB {
+
     static set(key: ArrayBuffer, value: ArrayBuffer): void {
         _db(
             Type.SET,

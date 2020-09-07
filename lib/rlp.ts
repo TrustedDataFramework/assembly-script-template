@@ -1,8 +1,8 @@
-import { U256 } from '.'
+import { U256, Address, log } from '.'
 import { Util } from './util';
 const OFFSET_SHORT_LIST: u8 = 0xc0;
 
-function emptyList(): ArrayBuffer{
+function emptyList(): ArrayBuffer {
     const ret = new Uint8Array(1);
     ret[0] = OFFSET_SHORT_LIST;
     return ret.buffer;
@@ -13,7 +13,7 @@ function emptyList(): ArrayBuffer{
 // type, ptr0 ptr0Len dst, put ? 
 declare function _rlp(type: u64, arg0: u64, arg1: u64, arg2: u64, arg3: u64): u64;
 
-enum Type{
+enum Type {
     ENCODE_U64,
     ENCODE_BYTES,
     DECODE_BYTES,
@@ -26,52 +26,137 @@ enum Type{
 }
 
 export class RLP {
+    // 支持的类型： u64 U256 string ArrayBuffer Address
+    static encode<T>(t: T): ArrayBuffer {
+        // rlp 不支持浮点数
+        if (isFloat<T>() || isFunction<T>()) {
+            assert(false, 'rlp encode failed, invalid type ' + nameof<T>());
+            return new ArrayBuffer(0);
+        }
+
+        // rlp 不支持 负整数
+        if (isSigned<T>()) {
+            if (i64(t) < 0) {
+                assert(false, 'rlp encode failed negative integer ' + i64(t).toString());
+                return new ArrayBuffer(0);
+            }
+        }
+
+        if (isInteger<T>()) {
+            return RLP.encodeU64(u64(t));
+        }
+
+        if (isString<T>()) {
+            return RLP.encodeString(changetype<string>(t));
+        }
+        switch (idof<T>()) {
+            case idof<ArrayBuffer>():
+                return RLP.encodeBytes(changetype<ArrayBuffer>(t));
+            case idof<U256>():
+                return RLP.encodeBytes(changetype<U256>(t).buf);
+            case idof<Address>():
+                return RLP.encodeBytes(changetype<Address>(t).buf)
+        }
+        assert(false, 'rlp encode failed, invalid type ' + nameof<T>());
+        return new ArrayBuffer(0);
+    }
+
+    static decode<T>(buf: ArrayBuffer): T {
+        // rlp 不支持浮点数
+        if (isFloat<T>() || isFunction<T>()) {
+            assert(false, 'rlp encode failed, invalid type ' + nameof<T>());
+            return changetype<T>(null);
+        }
+
+        if (isBoolean<T>()) {
+            return RLP.decodeU64(buf) != 0;
+        }
+
+        if (isInteger<T>()) {
+            const ret = RLP.decodeU64(buf);
+            if (isSigned<T>()) {
+                if (i64(ret) < 0) {
+                    assert(false, 'rlp decode failed for negative integer ' + i64(ret).toString());
+                    return changetype<T>(null);
+                }
+            }
+            if (sizeof<T>() == 8) {
+                return ret;
+            }
+            if (sizeof<T>() == 4) {
+                assert(ret <= u32.MAX_VALUE, 'invalid u32: overflow');
+                return u32(ret);
+            }
+            if (sizeof<T>() == 2) {
+                assert(ret <= u16.MAX_VALUE, 'invalid u32: overflow');
+                return u16(ret);
+            }
+            if (sizeof<T>() == 1) {
+                assert(ret <= u8.MAX_VALUE, 'invalid u32: overflow');
+                return u8(ret);
+            }
+        }
+        if (isString<T>()) {
+            return changetype<T>(RLP.decodeString(buf));
+        }
+        switch (idof<T>()) {
+            case idof<ArrayBuffer>():
+                return changetype<T>(RLP.decodeBytes(buf));
+            case idof<U256>():
+                return changetype<T>(new U256(RLP.decodeBytes(buf)));
+            case idof<Address>():
+                return changetype<T>(new Address(RLP.decodeBytes(buf)));
+        }
+        assert(false, 'rlp encode failed, invalid type ' + nameof<T>());
+        return changetype<T>(null);
+    }
+
     // check the byte array was encoded from a list
     static isList(encoded: ArrayBuffer): bool {
         const arr = Uint8Array.wrap(encoded);
         return arr[0] >= OFFSET_SHORT_LIST;
     }
 
-    static encodeU64(u: u64): ArrayBuffer{
+    static encodeU64(u: u64): ArrayBuffer {
         const len = _rlp(Type.ENCODE_U64, u, 0, 0, 0);
         const buf = new ArrayBuffer(u32(len));
         _rlp(Type.ENCODE_U64, u, 0, changetype<usize>(buf), 1);
         return buf;
     }
 
-    static encodeU256(u: U256): ArrayBuffer{
+    static encodeU256(u: U256): ArrayBuffer {
         return encodeBytes(u.buf);
     }
 
-    static decodeU64(u: ArrayBuffer): u64{
+    static decodeU64(u: ArrayBuffer): u64 {
         return RLPItem.fromEncoded(u).u64();
     }
 
-    static decodeU256(u: ArrayBuffer): U256{
+    static decodeU256(u: ArrayBuffer): U256 {
         return RLPItem.fromEncoded(u).u256();
     }
 
-    static decodeString(encoded: ArrayBuffer): string{
+    static decodeString(encoded: ArrayBuffer): string {
         return RLPItem.fromEncoded(encoded).string();
     }
 
 
     // encode a string
-    static encodeString(s: string): ArrayBuffer{
+    static encodeString(s: string): ArrayBuffer {
         return encodeBytes(String.UTF8.encode(s));
     }
 
     // encode string list
-    static encodeStringArray(s: Array<string>): ArrayBuffer{
+    static encodeStringArray(s: Array<string>): ArrayBuffer {
         const elements: Array<ArrayBuffer> = new Array<ArrayBuffer>(s.length);
-        for(let i = 0; i < elements.length; i++){
+        for (let i = 0; i < elements.length; i++) {
             elements[i] = this.encodeString(s[i]);
         }
         return encodeElements(elements);
     }
 
     // encode a byte array
-    static encodeBytes(bytes: ArrayBuffer): ArrayBuffer{
+    static encodeBytes(bytes: ArrayBuffer): ArrayBuffer {
         return encodeBytes(bytes);
     }
 
@@ -79,11 +164,11 @@ export class RLP {
         return encodeElements(elements);
     }
 
-    static decodeBytes(data: ArrayBuffer): ArrayBuffer{
+    static decodeBytes(data: ArrayBuffer): ArrayBuffer {
         const len = _rlp(Type.DECODE_BYTES, changetype<usize>(data), data.byteLength, 0, 0);
         const buf = new ArrayBuffer(u32(len));
-        _rlp(Type.DECODE_BYTES, changetype<usize>(data), data.byteLength, changetype<usize>(buf), 1);  
-        return buf;        
+        _rlp(Type.DECODE_BYTES, changetype<usize>(data), data.byteLength, changetype<usize>(buf), 1);
+        return buf;
     }
 }
 
@@ -116,11 +201,12 @@ export class RLPItem {
     }
 
     u64(): u64 {
+        assert(this.data.byteLength <= 8, 'invalid u64: overflow');
         return Util.bytesToU64(this.data);
     }
 
-    u256(): U256{
-       return new U256(this.bytes());
+    u256(): U256 {
+        return new U256(this.bytes());
     }
 
     bytes(): ArrayBuffer {
@@ -131,7 +217,7 @@ export class RLPItem {
         return String.UTF8.decode(this.data);
     }
 
-    isNull(): bool{
+    isNull(): bool {
         return this.data.byteLength == 0;
     }
 }
@@ -146,7 +232,7 @@ export class RLPList {
         _rlp(Type.RLP_LIST_SET, changetype<usize>(encoded), encoded.byteLength, 0, 0);
         const len = u32(_rlp(Type.RLP_LIST_LEN, 0, 0, 0, 0));
         const elements = new Array<ArrayBuffer>(len);
-        for(let i: u32 = 0; i < len; i++){
+        for (let i: u32 = 0; i < len; i++) {
             const bufLen = _rlp(Type.RLP_LIST_GET, i, 0, 0, 0);
             const buf = new ArrayBuffer(u32(bufLen));
             _rlp(Type.RLP_LIST_GET, i, 0, changetype<usize>(buf), 1);
@@ -172,7 +258,7 @@ export class RLPList {
         return this.elements[index];
     }
 
-    isNull(index: u32): bool{
+    isNull(index: u32): bool {
         return this.elements[index].byteLength == 1 && Uint8Array.wrap(this.elements[index])[0] == 0x80;
     }
 }
@@ -181,15 +267,15 @@ export class RLPList {
 function encodeBytes(bytes: ArrayBuffer): ArrayBuffer {
     const len = _rlp(Type.ENCODE_BYTES, changetype<usize>(bytes), bytes.byteLength, 0, 0);
     const buf = new ArrayBuffer(u32(len));
-    _rlp(Type.ENCODE_BYTES, changetype<usize>(bytes), bytes.byteLength, changetype<usize>(buf), 1);    
+    _rlp(Type.ENCODE_BYTES, changetype<usize>(bytes), bytes.byteLength, changetype<usize>(buf), 1);
     return buf;
 }
 
 
 function encodeElements(elements: Array<ArrayBuffer>): ArrayBuffer {
-    if(elements.length == 0)
+    if (elements.length == 0)
         return emptyList();
-    for(let i = 0; i < elements.length; i++){
+    for (let i = 0; i < elements.length; i++) {
         const buf = elements[i];
         _rlp(Type.RLP_LIST_PUSH, changetype<usize>(buf), buf.byteLength, 0, 0);
     }

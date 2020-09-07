@@ -48,6 +48,38 @@ enum ReflectType {
 }
 
 export class Address {
+
+    @operator(">")
+    static __op_gt(left: Address, right :Address): bool {
+        return Util.compareBytes(left.buf, right.buf) > 0;
+    }
+
+    @operator(">=")
+    static __op_gte(left: Address, right :Address): bool {
+        return Util.compareBytes(left.buf, right.buf) >= 0;
+    }
+
+    @operator("<")
+    static __op_lt(left: Address, right :Address): bool {
+        return Util.compareBytes(left.buf, right.buf) < 0;
+    }
+
+    @operator("<=")
+    static __op_lte(left: Address, right :Address): bool {
+        return Util.compareBytes(left.buf, right.buf) <= 0;
+    }
+
+    @operator("==")
+    static __op_eq(left: Address, right :Address): bool {
+        return Util.compareBytes(left.buf, right.buf) == 0;
+    }
+
+    @operator("!=")
+    static __op_ne(left: Address, right :Address): bool {
+        return Util.compareBytes(left.buf, right.buf) != 0;
+    }
+
+
     constructor(readonly buf: ArrayBuffer) {
     }
 
@@ -90,10 +122,6 @@ export class Address {
         const ret = new ArrayBuffer(u32(len));
         _context(ContextType.CONTRACT_CODE, ptr, this.buf.byteLength, changetype<usize>(ret), 1);
         return ret;
-    }
-
-    equals(y: Address): bool {
-        return Util.compareBytes(this.buf, y.buf) == 0;
     }
 
     toString(): string{
@@ -154,25 +182,9 @@ export class ParametersBuilder {
         this.elements = new Array<ArrayBuffer>();
     }
 
-    pushBytes(data: ArrayBuffer): void {
-        this.elements.push(RLP.encodeBytes(data));
-    }
-
-    pushAddress(addr: Address): void {
-        this.elements.push(RLP.encodeBytes(addr.buf));
-    }
-
-    pushU64(data: u64): void {
-        this.elements.push(RLP.encodeU64(data));
-    }
-
-    pushU256(data: U256): void {
-        this.elements.push(RLP.encodeU256(data));
-    }
-
-    pushString(data: string): void {
-        this.elements.push(RLP.encodeString(data));
-    }
+    push<T>(data: T): void{
+        this.elements.push(RLP.encode<T>(data));
+    }   
 
     build(): Parameters {
         const encoded = RLP.encodeElements(this.elements);
@@ -187,24 +199,8 @@ export class Parameters {
         readonly li: RLPList
     ) { }
 
-    address(idx: u32): Address {
-        return new Address(this.li.getItem(idx).bytes());
-    }
-
-    u64(idx: u32): u64 {
-        return this.li.getItem(idx).u64();
-    }
-
-    u256(idx: u32): U256 {
-        return this.li.getItem(idx).u256();
-    }
-
-    string(idx: u32): string {
-        return this.li.getItem(idx).string();
-    }
-
-    bytes(idx: u32): ArrayBuffer {
-        return this.li.getItem(idx).bytes();
+    get<T>(idx: u32): T{
+        return RLP.decode<T>(this.li.getRaw(idx));
     }
 
     // return parameters
@@ -261,7 +257,7 @@ export class Context {
         return new Address(getBytes(ContextType.CONTRACT_ADDRESS));
     }
 
-    emit(name: string, data: Parameters): void {
+    static emit(name: string, data: Parameters): void {
         const str = String.UTF8.encode(name);
         const buf = data.li.encoded;
         _event(0, changetype<usize>(str), str.byteLength, changetype<usize>(buf), buf.byteLength);
