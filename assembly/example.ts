@@ -1,4 +1,4 @@
-import {DB, log, RLP, Context, ParametersBuilder} from "../lib";
+import {DB, log, RLP, Context, ParametersBuilder, Globals} from "../lib";
 
 const KEY = Uint8Array.wrap(String.UTF8.encode('key'));
 
@@ -14,15 +14,15 @@ export function invoke(): void{
 
 
 export function increment(): void {
-    let i = DB.getGlobalOrDefault<u64>('i', 0);
+    let i = Globals.getOrDefault<u64>('i', 0);
     i++;
     log("call contract successful counter = " + i.toString());
-    DB.setGlobal<u64>('i', i);
+    Globals.set<u64>('i', i);
 }
 
 export function get(): void{
     const builder = new ParametersBuilder();
-    builder.push<u64>(i);
+    builder.push<u64>(Globals.get<u64>('i'));
     builder.build().writeResult();
 }
 

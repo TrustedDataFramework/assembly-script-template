@@ -26,7 +26,7 @@ enum Type {
 }
 
 export class RLP {
-    // 支持的类型： u64 U256 string ArrayBuffer Address
+    // 支持的类型： u64 u16 u8 bool U256 string ArrayBuffer Address
     static encode<T>(t: T): ArrayBuffer {
         // rlp 不支持浮点数
         if (isFloat<T>() || isFunction<T>()) {
