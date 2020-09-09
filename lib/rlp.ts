@@ -26,7 +26,7 @@ export class RLP {
         return ret.buffer;
     }
 
-    // 支持的类型： u64 u16 u8 bool U256 string ArrayBuffer Address
+    // 支持的类型： u64 i64 f64 bool U256 string ArrayBuffer Address
     static encode<T>(t: T): ArrayBuffer {
         // rlp 不支持浮点数
         if (isFunction<T>()) {
@@ -57,8 +57,8 @@ export class RLP {
         return new ArrayBuffer(0);
     }
 
+    // 支持的类型： u64 i64 f64 bool U256 string ArrayBuffer Address
     static decode<T>(buf: ArrayBuffer): T {
-        // rlp 不支持浮点数
         if (isFunction<T>()) {
             assert(false, 'rlp encode failed, invalid type ' + nameof<T>());
             return changetype<T>(null);

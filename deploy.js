@@ -26,6 +26,7 @@ async function deployIndex() {
     builder.nonce = nonce
     const tx = builder.buildDeploy(contract)
     contract.address = tool.getContractAddress(addr, nonce)
+    rpc.listen(contract, 'Event', (addr, evenet, params) => {console.log('params=', params)})
     await rpc.sendAndObserve(tx)
     await rpc.viewContract(contract, 'getBool', ['true']).then(console.log)
     await rpc.viewContract(contract, 'getI64', [-1000]).then(console.log)
@@ -69,13 +70,13 @@ async function deployCoin(){
 }
 
 
-//
-// deployIndex().catch(e => console.error( e.reason || e))
-//     .then(() => rpc.close())
+
+deployIndex().catch(e => console.error( e.reason || e))
+    
 
 // deployFactory().catch(e => console.error( e.reason || e))
 //     .then(() => rpc.close())
 
-deployCoin().catch(e => console.error( e.reason || e))
-    .then(() => rpc.close())
+// deployCoin().catch(e => console.error( e.reason || e))
+//     .then(() => rpc.close())
 // console.log(tool.bytesToF64(tool.f64ToBytes(2.0)))

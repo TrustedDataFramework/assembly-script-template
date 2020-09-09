@@ -114,5 +114,17 @@
                 "type": "f64"
             }
         ]
-    }                                                    
+    },
+    {
+        "name": "Event",
+        "type": "event",     
+        "outputs": [
+            {
+                "type": "address"
+            },
+            {
+                "type": "u64"
+            }            
+        ]
+    }                                                
 ]

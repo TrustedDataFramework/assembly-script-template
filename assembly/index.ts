@@ -5,8 +5,10 @@ import { Util, U256, Address, log, ___idof, ABI_DATA_TYPE, Context} from "../lib
 
 // which will be called at most once when contract deployed
 export function init(): void {
-    log(Context.self().toString());
+    log(Util.encodeHex(Context.self().abi()));
+    Context.emit<Event>(new Event(Context.self(), 12345677));
 }
+
 
 
 export function getBool(a: bool): bool {
@@ -51,4 +53,10 @@ export function getU256(x: U256): U256 {
 
 export function __idof(type: ABI_DATA_TYPE): u32{
     return ___idof(type);
+}
+
+@unmanaged
+class Event{
+    constructor(readonly addr: Address, readonly amount: u64){
+    }
 }
