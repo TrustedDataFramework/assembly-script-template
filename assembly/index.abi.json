@@ -4,7 +4,115 @@
         "type": "function"
     },
     {
-        "name": "invoke",
-        "type": "function"
-    }    
+        "name": "getBool",
+        "type": "function",
+        "inputs": [
+            {
+                "type": "bool"
+            }
+        ],        
+        "outputs": [
+            {
+                "type": "bool"
+            }
+        ]
+    },
+    {
+        "name": "getI64",
+        "type": "function",
+        "inputs": [
+            {
+                "type": "i64"
+            }
+        ],          
+        "outputs": [
+            {
+                "type": "i64"
+            }
+        ]
+    },
+    {
+        "name": "getU64",
+        "type": "function",
+        "inputs": [
+            {
+                "type": "u64"
+            }
+        ],          
+        "outputs": [
+            {
+                "type": "u64"
+            }
+        ]
+    },
+    {
+        "name": "getString",
+        "type": "function",
+        "inputs": [
+            {
+                "type": "string"
+            }
+        ],          
+        "outputs": [
+            {
+                "type": "string"
+            }
+        ]
+    },
+    {
+        "name": "getBytes",
+        "type": "function",
+        "inputs": [
+            {
+                "type": "bytes"
+            }
+        ],          
+        "outputs": [
+            {
+                "type": "bytes"
+            }
+        ]
+    },
+    {
+        "name": "getAddress",
+        "type": "function",
+        "inputs": [
+            {
+                "type": "address"
+            }
+        ],          
+        "outputs": [
+            {
+                "type": "address"
+            }
+        ]
+    },
+    {
+        "name": "getU256",
+        "type": "function",
+        "inputs": [
+            {
+                "type": "u256"
+            }
+        ],          
+        "outputs": [
+            {
+                "type": "u256"
+            }
+        ]
+    },
+    {
+        "name": "getF64",
+        "type": "function",
+        "inputs": [
+            {
+                "type": "f64"
+            }
+        ],          
+        "outputs": [
+            {
+                "type": "f64"
+            }
+        ]
+    }                                                    
 ]

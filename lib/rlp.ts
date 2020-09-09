@@ -2,12 +2,6 @@ import { U256, Address, log } from '.'
 import { Util } from './util';
 const OFFSET_SHORT_LIST: u8 = 0xc0;
 
-function emptyList(): ArrayBuffer {
-    const ret = new Uint8Array(1);
-    ret[0] = OFFSET_SHORT_LIST;
-    return ret.buffer;
-}
-
 // @ts-ignore
 @external("env", "_rlp")
 // type, ptr0 ptr0Len dst, put ? 
@@ -26,20 +20,22 @@ enum Type {
 }
 
 export class RLP {
+    static emptyList(): ArrayBuffer {
+        const ret = new Uint8Array(1);
+        ret[0] = OFFSET_SHORT_LIST;
+        return ret.buffer;
+    }
+
     // 支持的类型： u64 u16 u8 bool U256 string ArrayBuffer Address
     static encode<T>(t: T): ArrayBuffer {
         // rlp 不支持浮点数
-        if (isFloat<T>() || isFunction<T>()) {
+        if (isFunction<T>()) {
             assert(false, 'rlp encode failed, invalid type ' + nameof<T>());
             return new ArrayBuffer(0);
         }
 
-        // rlp 不支持 负整数
-        if (isSigned<T>()) {
-            if (i64(t) < 0) {
-                assert(false, 'rlp encode failed negative integer ' + i64(t).toString());
-                return new ArrayBuffer(0);
-            }
+        if (isFloat<T>()) {
+            return RLP.encodeU64(reinterpret<u64>(t));
         }
 
         if (isInteger<T>()) {
@@ -63,9 +59,13 @@ export class RLP {
 
     static decode<T>(buf: ArrayBuffer): T {
         // rlp 不支持浮点数
-        if (isFloat<T>() || isFunction<T>()) {
+        if (isFunction<T>()) {
             assert(false, 'rlp encode failed, invalid type ' + nameof<T>());
             return changetype<T>(null);
+        }
+
+        if (isFloat<T>()) {
+            return reinterpret<f64>(RLP.decodeU64(buf));
         }
 
         if (isBoolean<T>()) {
@@ -74,12 +74,7 @@ export class RLP {
 
         if (isInteger<T>()) {
             const ret = RLP.decodeU64(buf);
-            if (isSigned<T>()) {
-                if (i64(ret) < 0) {
-                    assert(false, 'rlp decode failed for negative integer ' + i64(ret).toString());
-                    return changetype<T>(null);
-                }
-            }
+
             if (sizeof<T>() == 8) {
                 return ret;
             }
@@ -223,7 +218,7 @@ export class RLPItem {
 }
 
 export class RLPList {
-    static EMPTY: RLPList = new RLPList([], emptyList());
+    static EMPTY: RLPList = new RLPList([], RLP.emptyList());
 
     private constructor(readonly elements: Array<ArrayBuffer>, readonly encoded: ArrayBuffer) {
     }
@@ -274,7 +269,7 @@ function encodeBytes(bytes: ArrayBuffer): ArrayBuffer {
 
 function encodeElements(elements: Array<ArrayBuffer>): ArrayBuffer {
     if (elements.length == 0)
-        return emptyList();
+        return RLP.emptyList();
     for (let i = 0; i < elements.length; i++) {
         const buf = elements[i];
         _rlp(Type.RLP_LIST_PUSH, changetype<usize>(buf), buf.byteLength, 0, 0);

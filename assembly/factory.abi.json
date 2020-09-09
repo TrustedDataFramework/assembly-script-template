@@ -1,0 +1,11 @@
+[
+  {
+    "name": "init",
+    "type": "function",
+    "inputs": [
+      {
+        "type": "address"
+      }
+    ]
+  }
+]

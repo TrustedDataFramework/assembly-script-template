@@ -1,6 +1,56 @@
 import { RLPList, RLP } from "./rlp";
 import { Util, U256 } from "./util";
-import {log} from "./index";
+
+export function ___idof(type: ABI_DATA_TYPE): u32 {
+    switch (type) {
+        case ABI_DATA_TYPE.STRING:
+            return idof<string>();
+        case ABI_DATA_TYPE.BYTES:
+            return idof<ArrayBuffer>();
+        case ABI_DATA_TYPE.ADDRESS:
+            return idof<Address>();
+        case ABI_DATA_TYPE.U256:
+            return idof<U256>();
+    }
+    return 0;
+}
+
+function __getAbiOf<T>(): ABI_DATA_TYPE {
+    if (isBoolean<T>()) {
+        return ABI_DATA_TYPE.BOOL;
+    }
+    if (isInteger<T>()) {
+        if (isSigned<T>()) {
+            return ABI_DATA_TYPE.I64;
+        } else {
+            return ABI_DATA_TYPE.U64;
+        }
+    }
+    if (isFloat<T>())
+        return ABI_DATA_TYPE.F64;
+    if (isString<T>())
+        return ABI_DATA_TYPE.STRING;
+
+    if (idof<T>() == idof<Address>())
+        return ABI_DATA_TYPE.ADDRESS;
+
+    if (idof<T>() == idof<U256>())
+        return ABI_DATA_TYPE.U256;
+
+    assert(false, 'unexpected type ' + nameof<T>());
+    return ABI_DATA_TYPE.BOOL;
+}
+
+export enum ABI_DATA_TYPE {
+    BOOL, // 0
+    I64,  // 1
+    U64, //  2 BN
+    F64,
+    STRING, // 3 string
+    BYTES, // 4
+    ADDRESS, // 5
+    U256, // 6
+}
 
 // @ts-ignore
 @external("env", "_context")
@@ -18,9 +68,6 @@ declare function _reflect(type: u64, ptr0: u64, ptr0Len: u64, ptr1: u64, ptr1Len
 // type, address, amount
 declare function _transfer(type: u64, ptr0: u64, ptr1Len: u64, amount_ptr: u64, amount_len: u64): void;
 
-// @ts-ignore
-@external("env", "_result")
-declare function _result(offset: usize, len: usize): void;
 
 // @ts-ignore
 @external("env", "_event")
@@ -50,32 +97,32 @@ enum ReflectType {
 export class Address {
 
     @operator(">")
-    static __op_gt(left: Address, right :Address): bool {
+    static __op_gt(left: Address, right: Address): bool {
         return Util.compareBytes(left.buf, right.buf) > 0;
     }
 
     @operator(">=")
-    static __op_gte(left: Address, right :Address): bool {
+    static __op_gte(left: Address, right: Address): bool {
         return Util.compareBytes(left.buf, right.buf) >= 0;
     }
 
     @operator("<")
-    static __op_lt(left: Address, right :Address): bool {
+    static __op_lt(left: Address, right: Address): bool {
         return Util.compareBytes(left.buf, right.buf) < 0;
     }
 
     @operator("<=")
-    static __op_lte(left: Address, right :Address): bool {
+    static __op_lte(left: Address, right: Address): bool {
         return Util.compareBytes(left.buf, right.buf) <= 0;
     }
 
     @operator("==")
-    static __op_eq(left: Address, right :Address): bool {
+    static __op_eq(left: Address, right: Address): bool {
         return Util.compareBytes(left.buf, right.buf) == 0;
     }
 
     @operator("!=")
-    static __op_ne(left: Address, right :Address): bool {
+    static __op_ne(left: Address, right: Address): bool {
         return Util.compareBytes(left.buf, right.buf) != 0;
     }
 
@@ -88,8 +135,11 @@ export class Address {
         _transfer(0, ptr, this.buf.byteLength, changetype<usize>(amount.buf), amount.buf.byteLength);
     }
 
-    call(method: string, parameters: Parameters, amount: U256): Parameters {
-        const buf = RLP.encodeElements(parameters.li.elements);
+    call<T>(method: string, parameters: Parameters, amount: U256): T {
+        let abiType: ArrayBuffer = isVoid<T>() ? RLP.emptyList() : RLP.encodeU64(__getAbiOf<T>());
+        abiType = isVoid<T>() ? abiType : RLP.encodeElements([abiType]);
+        const arr: Array<ArrayBuffer> = [RLP.encodeElements(parameters.types), RLP.encodeElements(parameters.li), abiType];
+        const buf = RLP.encodeElements(arr);
         const ptr0 = changetype<usize>(this.buf);
         const ptr0len = this.buf.byteLength;
         const str = String.UTF8.encode(method);
@@ -100,7 +150,9 @@ export class Address {
         const len = _reflect(ReflectType.CALL_WITHOUT_PUT, ptr0, ptr0len, ptr1, ptr1len, ptr2, ptr2len, changetype<usize>(amount.buf), amount.buf.byteLength, 0);
         const ret = new ArrayBuffer(u32(len));
         _reflect(ReflectType.CALL_WITH_PUT, ptr0, ptr0len, ptr1, ptr1len, ptr2, ptr2len, changetype<usize>(amount.buf), amount.buf.byteLength, changetype<usize>(ret));
-        return len == 0 ? Parameters.EMPTY : new Parameters(RLPList.fromEncoded(ret));
+        if (!isVoid<T>()) {
+            return RLP.decode<T>(RLPList.fromEncoded(ret).getRaw(0));
+        }
     }
 
     balance(): U256 {
@@ -124,7 +176,7 @@ export class Address {
         return ret;
     }
 
-    toString(): string{
+    toString(): string {
         return Util.encodeHex(this.buf);
     }
 }
@@ -177,36 +229,33 @@ export enum TransactionType {
 }
 
 export class ParametersBuilder {
+    private readonly types: Array<ArrayBuffer>;
     private readonly elements: Array<ArrayBuffer>;
+
     constructor() {
         this.elements = new Array<ArrayBuffer>();
+        this.types = new Array<ArrayBuffer>();
+
     }
 
-    push<T>(data: T): void{
+    push<T>(data: T): void {
+        this.types.push(RLP.encodeU64(__getAbiOf<T>()));
         this.elements.push(RLP.encode<T>(data));
-    }   
+    }
 
     build(): Parameters {
-        const encoded = RLP.encodeElements(this.elements);
-        return new Parameters(RLPList.fromEncoded(encoded));
+        const ar = RLP.encodeElements(this.elements);
+        return new Parameters(this.types, this.elements);
     }
 }
 
 export class Parameters {
-    static EMPTY: Parameters = new Parameters(RLPList.EMPTY);
+    static EMPTY: Parameters = new Parameters([], []);
 
     constructor(
-        readonly li: RLPList
+        readonly types: Array<ArrayBuffer>,
+        readonly li: Array<ArrayBuffer>
     ) { }
-
-    get<T>(idx: u32): T{
-        return RLP.decode<T>(this.li.getRaw(idx));
-    }
-
-    // return parameters
-    writeResult(): void {
-        _result(changetype<usize>(this.li.encoded), this.li.encoded.byteLength);
-    }
 }
 
 export class Header {
@@ -302,16 +351,11 @@ export class Context {
         );
     }
 
-    static parameters(): Parameters {
-        const buf = getBytes(ContextType.ARGUMENTS_PARAMETERS);
-        const li = RLPList.fromEncoded(buf);
-        return new Parameters(li);
-    }
-
     static create(code: ArrayBuffer, parameters: Parameters, amount: U256): Address {
         const ptr0 = changetype<usize>(code);
         const ptr0len = code.byteLength;
-        const buf = RLP.encodeElements(parameters.li.elements);
+        const arr: Array<ArrayBuffer> = [RLP.encodeElements(parameters.types), RLP.encodeElements(parameters.li), RLP.emptyList()];
+        const buf = RLP.encodeElements(arr);
         const ptr1 = changetype<usize>(buf);
         const ptr1len = buf.byteLength;
 
