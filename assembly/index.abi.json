@@ -129,8 +129,24 @@
                 "name": "addr"
             },
             {
+                "type": "string",
+                "name": "msg"
+            },
+            {
+                "type": "bool",
+                "name": "amount0"
+            },
+            {
                 "type": "u64",
-                "name": "amount"
+                "name": "amount1"
+            },
+            {
+                "type": "f64",
+                "name": "amount2"
+            },
+            {
+                "type": "i64",
+                "name": "amount3"
             }
         ]
     }

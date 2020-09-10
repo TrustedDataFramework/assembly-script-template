@@ -27,7 +27,7 @@ async function deployIndex() {
     const tx = builder.buildDeploy(contract)
     contract.address = tool.getContractAddress(addr, nonce)
     rpc.listen(contract, 'Event', (params) => { console.log('params=', params) })
-    return await rpc.sendAndObserve(tx)
+    return await rpc.sendAndObserve(tx).then(x => console.log(x.events))
     // await rpc.viewContract(contract, 'getBool', ['true']).then(console.log)
     // await rpc.viewContract(contract, 'getI64', [-1000]).then(console.log)
     // await rpc.viewContract(contract, 'getU64', [2000]).then(console.log)
@@ -73,7 +73,6 @@ async function deployCoin() {
 
 deployIndex()
 .catch(e => console.error((e & e.reason) || e))
-.then(console.log)
 
 
 // deployFactory().catch(e => console.error( e.reason || e))

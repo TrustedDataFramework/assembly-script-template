@@ -6,7 +6,7 @@ import { Util, U256, Address, log, ___idof, ABI_DATA_TYPE, Context} from "../lib
 // which will be called at most once when contract deployed
 export function init(): Address {
     log(Util.encodeHex(Context.self().abi()));
-    Context.emit<Event>(new Event(Context.self(), 12345677));
+    Context.emit<Event>(new Event(Context.self(), 'hello world', false, 222222, 3.14, i64.MIN_VALUE));
     return Context.self();
 }
 
@@ -58,6 +58,6 @@ export function __idof(type: ABI_DATA_TYPE): u32{
 
 @unmanaged
 class Event{
-    constructor(readonly addr: Address, readonly amount: u64){
+    constructor(readonly addr: Address, readonly msg: string, readonly amount0: bool, readonly amount1: u64, readonly amount2: f64, readonly amount3: i64){
     }
 }
