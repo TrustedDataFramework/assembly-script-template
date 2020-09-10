@@ -26,16 +26,16 @@ async function deployIndex() {
     builder.nonce = nonce
     const tx = builder.buildDeploy(contract)
     contract.address = tool.getContractAddress(addr, nonce)
-    rpc.listen(contract, 'Event', (addr, evenet, params) => {console.log('params=', params)})
-    await rpc.sendAndObserve(tx)
-    await rpc.viewContract(contract, 'getBool', ['true']).then(console.log)
-    await rpc.viewContract(contract, 'getI64', [-1000]).then(console.log)
-    await rpc.viewContract(contract, 'getU64', [2000]).then(console.log)
-    await rpc.viewContract(contract, 'getString', ['hello world']).then(console.log)
-    await rpc.viewContract(contract, 'getBytes', ['ffee']).then(console.log)
-    await rpc.viewContract(contract, 'getAddress', ['2f0119a808c74be8c5e0929e0ab94be211e6f01a']).then(console.log)
-    await rpc.viewContract(contract, 'getU256', ['123456']).then(console.log)
-    await rpc.viewContract(contract, 'getF64', [2.0]).then(console.log)
+    rpc.listen(contract, 'Event', (params) => { console.log('params=', params) })
+    return await rpc.sendAndObserve(tx)
+    // await rpc.viewContract(contract, 'getBool', ['true']).then(console.log)
+    // await rpc.viewContract(contract, 'getI64', [-1000]).then(console.log)
+    // await rpc.viewContract(contract, 'getU64', [2000]).then(console.log)
+    // await rpc.viewContract(contract, 'getString', ['hello world']).then(console.log)
+    // await rpc.viewContract(contract, 'getBytes', ['ffee']).then(console.log)
+    // await rpc.viewContract(contract, 'getAddress', ['2f0119a808c74be8c5e0929e0ab94be211e6f01a']).then(console.log)
+    // await rpc.viewContract(contract, 'getU256', ['123456']).then(console.log)
+    // await rpc.viewContract(contract, 'getF64', [2.0]).then(console.log)
 }
 
 async function deployFactory() {
@@ -45,10 +45,10 @@ async function deployFactory() {
     const nonce = await rpc.getNonce(addr) + 1
     builder.nonce = nonce
     const tx = builder.buildDeploy(contract, ['da1681b9a25293010a822ee9759e2199217e3aa5'])
-    await rpc.sendAndObserve(tx)
+    return await rpc.sendAndObserve(tx)
 }
 
-async function deployCoin(){
+async function deployCoin() {
     contract.binary = await tool.compileContract(ascPath, 'local/coin.ts', { debug: true })
     contract.abi = require('./local/coin.abi.json')
     const nonce = await rpc.getNonce(addr) + 1
@@ -71,8 +71,10 @@ async function deployCoin(){
 
 
 
-deployIndex().catch(e => console.error( e.reason || e))
-    
+deployIndex()
+.catch(e => console.error((e & e.reason) || e))
+.then(console.log)
+
 
 // deployFactory().catch(e => console.error( e.reason || e))
 //     .then(() => rpc.close())

@@ -1,7 +1,12 @@
 [
     {
         "name": "init",
-        "type": "function"
+        "type": "function",
+        "outputs": [
+            {
+                "type": "address"
+            }
+        ]
     },
     {
         "name": "getBool",
@@ -10,7 +15,7 @@
             {
                 "type": "bool"
             }
-        ],        
+        ],
         "outputs": [
             {
                 "type": "bool"
@@ -24,7 +29,7 @@
             {
                 "type": "i64"
             }
-        ],          
+        ],
         "outputs": [
             {
                 "type": "i64"
@@ -38,7 +43,7 @@
             {
                 "type": "u64"
             }
-        ],          
+        ],
         "outputs": [
             {
                 "type": "u64"
@@ -52,7 +57,7 @@
             {
                 "type": "string"
             }
-        ],          
+        ],
         "outputs": [
             {
                 "type": "string"
@@ -66,7 +71,7 @@
             {
                 "type": "bytes"
             }
-        ],          
+        ],
         "outputs": [
             {
                 "type": "bytes"
@@ -80,7 +85,7 @@
             {
                 "type": "address"
             }
-        ],          
+        ],
         "outputs": [
             {
                 "type": "address"
@@ -94,7 +99,7 @@
             {
                 "type": "u256"
             }
-        ],          
+        ],
         "outputs": [
             {
                 "type": "u256"
@@ -108,7 +113,7 @@
             {
                 "type": "f64"
             }
-        ],          
+        ],
         "outputs": [
             {
                 "type": "f64"
@@ -117,14 +122,16 @@
     },
     {
         "name": "Event",
-        "type": "event",     
+        "type": "event",
         "outputs": [
             {
-                "type": "address"
+                "type": "address",
+                "name": "addr"
             },
             {
-                "type": "u64"
-            }            
+                "type": "u64",
+                "name": "amount"
+            }
         ]
-    }                                                
+    }
 ]

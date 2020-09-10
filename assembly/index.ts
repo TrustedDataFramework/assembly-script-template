@@ -4,9 +4,10 @@
 import { Util, U256, Address, log, ___idof, ABI_DATA_TYPE, Context} from "../lib";
 
 // which will be called at most once when contract deployed
-export function init(): void {
+export function init(): Address {
     log(Util.encodeHex(Context.self().abi()));
     Context.emit<Event>(new Event(Context.self(), 12345677));
+    return Context.self();
 }
 
 

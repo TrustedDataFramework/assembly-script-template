@@ -12,7 +12,7 @@ enum Type {
     ENCODE_BYTES,
     DECODE_BYTES,
     RLP_LIST_SET, // add rlp list to global env
-    RLP_LIST_CLEAR,
+    RLP_LIST_CLEAR, // clear rlp list
     RLP_LIST_LEN,
     RLP_LIST_GET,
     RLP_LIST_PUSH,
@@ -26,9 +26,8 @@ export class RLP {
         return ret.buffer;
     }
 
-    // 支持的类型： u64 i64 f64 bool U256 string ArrayBuffer Address
+    // supported types： u64 i64 f64 bool U256 string ArrayBuffer Address
     static encode<T>(t: T): ArrayBuffer {
-        // rlp 不支持浮点数
         if (isFunction<T>()) {
             assert(false, 'rlp encode failed, invalid type ' + nameof<T>());
             return new ArrayBuffer(0);
@@ -57,7 +56,7 @@ export class RLP {
         return new ArrayBuffer(0);
     }
 
-    // 支持的类型： u64 i64 f64 bool U256 string ArrayBuffer Address
+    // supported types： u64 i64 f64 bool U256 string ArrayBuffer Address
     static decode<T>(buf: ArrayBuffer): T {
         if (isFunction<T>()) {
             assert(false, 'rlp encode failed, invalid type ' + nameof<T>());
@@ -106,7 +105,7 @@ export class RLP {
         return changetype<T>(null);
     }
 
-    // check the byte array was encoded from a list
+    // if the byte array was encoded from a list
     static isList(encoded: ArrayBuffer): bool {
         const arr = Uint8Array.wrap(encoded);
         return arr[0] >= OFFSET_SHORT_LIST;

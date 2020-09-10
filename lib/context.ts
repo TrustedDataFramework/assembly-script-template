@@ -1,6 +1,10 @@
 import { RLPList, RLP } from "./rlp";
 import { Util, U256 } from "./util";
 
+/**
+ * host function interface 
+ * @param type 
+ */
 export function ___idof(type: ABI_DATA_TYPE): u32 {
     switch (type) {
         case ABI_DATA_TYPE.STRING:
@@ -177,6 +181,7 @@ export class Address {
         return ret;
     }
 
+    // get contract abi
     abi(): ArrayBuffer {
         const ptr = changetype<usize>(this.buf);
         const len = _context(ContextType.CONTRACT_ABI, ptr, this.buf.byteLength, 0, 0);
@@ -305,11 +310,10 @@ export class Contract {
     }
 }
 
-
-/**
- * context.load() is only available when deploy/call contract
- */
 export class Context {
+    /**
+     * get address of current contract
+     */
     static self(): Address {
         return new Address(getBytes(ContextType.CONTRACT_ADDRESS));
     }
