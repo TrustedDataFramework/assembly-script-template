@@ -9,7 +9,7 @@ import { Context, Address } from '../lib'
 const _balance = Store.from<Address, U256>('balance');
 const _freeze = Store.from<Address, U256>('freeze');
 
-export function init(tokenName: string, symbol: string, totalSupply: U256, decimals: u64, owner: Address): void {
+export function init(tokenName: string, symbol: string, totalSupply: U256, decimals: u64, owner: Address): Address {
     // tokenName || symbol || totalSupply || decimals || owner
     Globals.set<string>('tokenName', tokenName);
     Globals.set<string>('symbol', symbol);
@@ -17,6 +17,7 @@ export function init(tokenName: string, symbol: string, totalSupply: U256, decim
     Globals.set<u64>('decimals', decimals);
     Globals.set<Address>('owner', owner);
     _balance.set(owner, totalSupply);
+    return Context.self();
 }
 
 // display balance

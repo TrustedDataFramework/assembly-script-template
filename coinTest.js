@@ -38,15 +38,17 @@ async function deployCoin() {
         owner: addr
     }, 0)
 
-    // 监听转账事件
-    rpc.listen(contract, 'Transfer', (data) => {console.log('event = Transfer'); log(data);})
-    // 监听冻结事件
-    rpc.listen(contract, 'Freeze', (data) => {console.log('event = Freeze'); log(data);})
-    // 监听解冻事件
-    rpc.listen(contract, 'Unfreeze', (data) => {console.log('event = Unfreeze'); log(data);})
-
     // 预先计算好合约的地址
     contract.address = tool.getContractAddress(addr, tx.nonce)
+
+    // 监听转账事件
+    rpc.listenOnce(contract, 'Transfer').then((data) => { console.log('event = Transfer'); log(data); })
+    // 监听冻结事件
+    rpc.listen(contract, 'Freeze', (data) => { console.log('event = Freeze'); log(data); })
+    // 监听解冻事件
+    rpc.listen(contract, 'Unfreeze').then((data) => { console.log('event = Unfreeze'); log(data); })
+
+
 
     // 部署合约
     log(await rpc.sendAndObserve(tx))
@@ -72,6 +74,9 @@ async function deployCoin() {
 
     // 查看 recipient 的余额
     log(await rpc.viewContract(contract, 'balanceOf', recipient))
+
+    log(rpc.__txObservers.size)
+    log(rpc.__eventHandlers.size)
 }
 
 deployCoin().catch(console.error)
